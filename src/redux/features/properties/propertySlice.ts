@@ -1,41 +1,34 @@
-// src/redux/features/properties/propertySlice.js
-
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import API from "../../../api/axios";
 
-// Interface for a single property
 export interface Property {
   _id: string;
   title: string;
   description: string;
   price: number;
-  location: {
-    city: string;
-    district: string;
-    area: string;
-    fullAddress: string;
-    pincode: string;
-  };
-  property_type: string;
-  transaction_type: "sale" | "rent" | "lease";
-  status: "Pending" | "Approved" | "Rejected";
   bedrooms: number;
   bathrooms: number;
   square_feet: number;
+  property_type: string;
+  transaction_type: string;
+  furnishingStatus: string;
+  images?: string[];
+  location: { city: string; fullAddress: string };
+  status: string;
   user?: {
     _id: string;
     name: string;
+    email: string;
+    phone?: string;
     role: string;
   };
+  createdAt: string;
 }
-
-// Interface for the update function payload
 interface UpdatePropertyPayload {
-  id: string;
-  propertyData: FormData;
+  title: string;
+  description: string;
+  price: number;
 }
-
-// Interface for the entire slice's state
 interface PropertyState {
   properties: Property[];
   property: Property | null;
@@ -44,8 +37,6 @@ interface PropertyState {
   isSuccess: boolean;
   message: string;
 }
-
-// The initial state for the slice
 const initialState: PropertyState = {
   properties: [],
   property: null,
@@ -55,44 +46,35 @@ const initialState: PropertyState = {
   message: "",
 };
 
-// --- ASYNC THUNKS ---
+interface GetPropertiesFilters {
+  isFeatured?: boolean;
+  city?: string;
+}
 
-// Thunk to get ALL properties (For Admin)
-export const getProperties = createAsyncThunk<Property[], void>(
-  "properties/getAll",
-  async (_, thunkAPI) => {
-    try {
-      const response = await API.get("/properties");
-      return response.data.data;
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to fetch properties."
-      );
+export const getProperties = createAsyncThunk<
+  Property[],
+  GetPropertiesFilters | void
+>("properties/getAll", async (filters, thunkAPI) => {
+  try {
+    const params = new URLSearchParams();
+    if (filters) {
+      if (filters.isFeatured) {
+        params.append("isFeatured", "true");
+      }
+      if (filters.city) {
+        params.append("city", filters.city);
+      }
     }
-  }
-);
 
-// =========================================================================
-// UPDATED CODE STARTS HERE: New thunk for brokers
-// Thunk to get ONLY the logged-in user's properties (For Broker)
-export const getMyProperties = createAsyncThunk<Property[], void>(
-  "properties/getMyProperties",
-  async (_, thunkAPI) => {
-    try {
-      // This endpoint '/properties/my-properties' is defined in your routes
-      const response = await API.get("/properties/my-properties");
-      return response.data.data;
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to fetch your properties."
-      );
-    }
+    const response = await API.get(`/properties?${params.toString()}`);
+    return response.data.data;
+  } catch (error: any) {
+    const message =
+      error.response?.data?.message || "Failed to fetch properties.";
+    return thunkAPI.rejectWithValue(message);
   }
-);
-// UPDATED CODE ENDS HERE
-// =========================================================================
+});
 
-// Thunk to get a single property by its ID
 export const getPropertyById = createAsyncThunk<Property, string>(
   "properties/getById",
   async (id, thunkAPI) => {
@@ -100,14 +82,13 @@ export const getPropertyById = createAsyncThunk<Property, string>(
       const response = await API.get(`/properties/${id}`);
       return response.data.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to fetch property."
-      );
+      const message =
+        error.response?.data?.message || "Failed to fetch property details.";
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
 
-// Thunk to create a new property
 export const createProperty = createAsyncThunk<Property, FormData>(
   "properties/create",
   async (propertyData, thunkAPI) => {
@@ -115,44 +96,27 @@ export const createProperty = createAsyncThunk<Property, FormData>(
       const response = await API.post("/properties", propertyData);
       return response.data.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to create property."
-      );
+      const message =
+        error.response?.data?.message || "Failed to create property.";
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
 
-// Thunk to update an existing property
-export const updateProperty = createAsyncThunk<Property, UpdatePropertyPayload>(
-  "properties/update",
-  async ({ id, propertyData }, thunkAPI) => {
-    try {
-      const response = await API.put(`/properties/${id}`, propertyData);
-      return response.data.data;
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to update property."
-      );
-    }
+export const updateProperty = createAsyncThunk<
+  Property,
+  { id: string; propertyData: UpdatePropertyPayload }
+>("properties/update", async ({ id, propertyData }, thunkAPI) => {
+  try {
+    const response = await API.put(`/properties/${id}`, propertyData);
+    return response.data.data;
+  } catch (error: any) {
+    const message =
+      error.response?.data?.message || "Failed to update property.";
+    return thunkAPI.rejectWithValue(message);
   }
-);
+});
 
-// Thunk to delete a property
-export const deleteProperty = createAsyncThunk<string, string>(
-  "properties/delete",
-  async (id, thunkAPI) => {
-    try {
-      await API.delete(`/properties/${id}`);
-      return id;
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to delete property."
-      );
-    }
-  }
-);
-
-// Thunk to approve a property (Admin only)
 export const approveProperty = createAsyncThunk<Property, string>(
   "properties/approve",
   async (id, thunkAPI) => {
@@ -160,126 +124,131 @@ export const approveProperty = createAsyncThunk<Property, string>(
       const response = await API.put(`/properties/${id}/approve`);
       return response.data.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to approve property."
-      );
+      const message =
+        error.response?.data?.message || "Failed to approve property.";
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );
 
-// --- THE SLICE ITSELF ---
+export const deleteProperty = createAsyncThunk<string, string>(
+  "properties/delete",
+  async (propertyId, thunkAPI) => {
+    try {
+      await API.delete(`/properties/${propertyId}`);
+      return propertyId;
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Failed to delete property.";
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const propertySlice = createSlice({
   name: "properties",
   initialState,
   reducers: {
-    // Resets the state to its initial values, except for data
     reset: (state) => {
       state.isLoading = false;
-      state.isSuccess = false;
       state.isError = false;
+      state.isSuccess = false;
       state.message = "";
+      state.property = null;
     },
   },
-  // Handles actions from async thunks
   extraReducers: (builder) => {
     builder
-      // Cases for getting ALL properties (Admin)
       .addCase(getProperties.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(
-        getProperties.fulfilled,
-        (state, action: PayloadAction<Property[]>) => {
-          state.isLoading = false;
-          state.isSuccess = true;
-          state.properties = action.payload;
-        }
-      )
-
-      // =========================================================================
-      // UPDATED CODE STARTS HERE: New cases for broker's properties
-      // Cases for getting MY properties (Broker)
-      .addCase(getMyProperties.pending, (state) => {
-        state.isLoading = true;
+      .addCase(getProperties.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.properties = action.payload;
       })
-      .addCase(
-        getMyProperties.fulfilled,
-        (state, action: PayloadAction<Property[]>) => {
-          state.isLoading = false;
-          state.isSuccess = true;
-          state.properties = action.payload; // Updates the same state array
-        }
-      )
-      // UPDATED CODE ENDS HERE
-      // =========================================================================
-
-      // Cases for getting a single property
+      .addCase(getProperties.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload as string;
+      })
       .addCase(getPropertyById.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(
-        getPropertyById.fulfilled,
-        (state, action: PayloadAction<Property>) => {
-          state.isLoading = false;
-          state.isSuccess = true;
-          state.property = action.payload;
-        }
-      )
-
-      // Cases for creating a property
+      .addCase(getPropertyById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.property = action.payload;
+      })
+      .addCase(getPropertyById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload as string;
+      })
       .addCase(createProperty.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(createProperty.fulfilled, (state) => {
+      .addCase(createProperty.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
+        state.properties.push(action.payload);
       })
-
-      // Cases for deleting a property
-      .addCase(
-        deleteProperty.fulfilled,
-        (state, action: PayloadAction<string>) => {
-          state.isSuccess = true;
-          state.properties = state.properties.filter(
-            (p) => p._id !== action.payload
-          );
+      .addCase(createProperty.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload as string;
+      })
+      .addCase(updateProperty.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(updateProperty.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        const index = state.properties.findIndex(
+          (p) => p._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.properties[index] = action.payload;
         }
-      )
-
-      // Cases for updating a property
-      .addCase(
-        updateProperty.fulfilled,
-        (state, action: PayloadAction<Property>) => {
-          state.isSuccess = true;
-          state.properties = state.properties.map((p) =>
-            p._id === action.payload._id ? action.payload : p
-          );
+      })
+      .addCase(updateProperty.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload as string;
+      })
+      .addCase(approveProperty.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(approveProperty.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        const index = state.properties.findIndex(
+          (p) => p._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.properties[index] = action.payload;
         }
-      )
-
-      // Cases for approving a property
-      .addCase(
-        approveProperty.fulfilled,
-        (state, action: PayloadAction<Property>) => {
-          state.isSuccess = true;
-          state.properties = state.properties.map((p) =>
-            p._id === action.payload._id ? action.payload : p
-          );
-        }
-      )
-
-      // A general matcher to handle all rejected thunks
-      .addMatcher(
-        (action) => action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.isLoading = false;
-          state.isError = true;
-          state.message = action.payload as string;
-        }
-      );
+      })
+      .addCase(approveProperty.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload as string;
+      })
+      .addCase(deleteProperty.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(deleteProperty.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.properties = state.properties.filter(
+          (prop) => prop._id !== action.payload
+        );
+      })
+      .addCase(deleteProperty.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload as string;
+      });
   },
 });
 
-// Exporting the reset action and the reducer
 export const { reset } = propertySlice.actions;
 export default propertySlice.reducer;

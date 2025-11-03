@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useAppSelector } from "@/redux/hooks";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks"; // Dispatch import karein
+import { createInquiry, reset } from "@/redux/features/inquiries/inquirySlice"; // Thunk import karein
 import { toast } from "sonner";
-import API from "@/api/axios";
+import { Loader2 } from "lucide-react";
 
 interface InquiryModalProps {
   isOpen: boolean;
@@ -26,41 +27,48 @@ export const InquiryModal: React.FC<InquiryModalProps> = ({
   onOpenChange,
   propertyId,
 }) => {
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const {
+    isLoading,
+    isSuccess,
+    isError,
+    message: inquiryMessage,
+  } = useAppSelector((state) => state.inquiries);
 
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      setEmail(user.email);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isSuccess && isOpen) {
+      toast.success("Inquiry sent successfully!");
+      onOpenChange(false);
+      setMessage("");
+      setPhone("");
+      dispatch(reset());
+    }
+    if (isError && isOpen) {
+      toast.error(inquiryMessage || "Failed to send inquiry.");
+      dispatch(reset());
+    }
+  }, [isSuccess, isError, inquiryMessage, dispatch, onOpenChange, isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !phone || !message) {
       toast.error("Please fill all fields.");
       return;
     }
-    setIsLoading(true);
-    try {
-      const response = await API.post("/inquiries", {
-        propertyId,
-        name,
-        email,
-        phone,
-        message,
-      });
-
-      if (response.data.success) {
-        toast.success(response.data.message);
-        onOpenChange(false);
-        setMessage("");
-        setPhone("");
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to send inquiry.");
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(createInquiry({ propertyId, name, email, phone, message }));
   };
 
   return (
@@ -128,6 +136,7 @@ export const InquiryModal: React.FC<InquiryModalProps> = ({
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? "Sending..." : "Send Inquiry"}
             </Button>
           </DialogFooter>

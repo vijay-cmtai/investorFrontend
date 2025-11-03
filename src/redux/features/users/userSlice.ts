@@ -1,14 +1,12 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import API from "../../../api/axios";
 
-// TypeScript के लिए User का टाइप
-interface User {
+export interface User {
   _id: string;
   name: string;
   email: string;
-  agency?: string;
-  status: "Active" | "Inactive";
-  role: string;
+  role: "Customer" | "Associate" | "Company" | "Admin";
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -28,37 +26,61 @@ const initialState: UserState = {
   message: "",
 };
 
-// --- Async Thunks ---
-
-// **getUsers को वापस जोड़ा गया है**
-export const getUsers = createAsyncThunk<User[]>(
+export const getAllUsers = createAsyncThunk<User[]>(
   "users/getAll",
   async (_, thunkAPI) => {
     try {
       const response = await API.get("/users");
       return response.data.data;
     } catch (error: any) {
-      const message =
-        error.response?.data?.message || error.message || error.toString();
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch users"
+      );
     }
   }
 );
 
-// getBrokers (ManageBrokers पेज के लिए)
-export const getBrokers = createAsyncThunk<User[]>(
-  "users/getBrokers",
+export const getAssociates = createAsyncThunk<User[]>(
+  "users/getAssociates",
   async (_, thunkAPI) => {
     try {
-      const response = await API.get("/users/brokers");
+      const response = await API.get("/users/associates");
       return response.data.data;
     } catch (error: any) {
-      const message =
-        error.response?.data?.message || error.message || error.toString();
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch associates"
+      );
     }
   }
 );
+
+export const createUser = createAsyncThunk<User, Partial<User>>(
+  "users/create",
+  async (userData, thunkAPI) => {
+    try {
+      const response = await API.post("/users", userData);
+      return response.data.data;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to create user"
+      );
+    }
+  }
+);
+
+export const updateUser = createAsyncThunk<
+  User,
+  { id: string; userData: Partial<Pick<User, "name" | "role" | "isActive">> }
+>("users/update", async ({ id, userData }, thunkAPI) => {
+  try {
+    const response = await API.put(`/users/${id}`, userData);
+    return response.data.data;
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(
+      error.response?.data?.message || "Failed to update user"
+    );
+  }
+});
 
 export const deleteUser = createAsyncThunk<string, string>(
   "users/delete",
@@ -67,26 +89,42 @@ export const deleteUser = createAsyncThunk<string, string>(
       await API.delete(`/users/${id}`);
       return id;
     } catch (error: any) {
-      const message =
-        error.response?.data?.message || error.message || error.toString();
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to delete user"
+      );
     }
   }
 );
 
-export const updateUser = createAsyncThunk<
-  User,
-  { id: string; userData: Partial<User> }
->("users/update", async ({ id, userData }, thunkAPI) => {
-  try {
-    const response = await API.put(`/users/${id}`, userData);
-    return response.data.data;
-  } catch (error: any) {
-    const message =
-      error.response?.data?.message || error.message || error.toString();
-    return thunkAPI.rejectWithValue(message);
+export const updateProfile = createAsyncThunk(
+  "user/updateProfile",
+  async (userData: FormData, thunkAPI) => {
+    try {
+      const response = await API.put("/users/profile", userData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to update profile"
+      );
+    }
   }
-});
+);
+
+export const changePassword = createAsyncThunk(
+  "user/changePassword",
+  async (passwordData: any, thunkAPI) => {
+    try {
+      const response = await API.put("/users/change-password", passwordData);
+      return response.data.message;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to change password"
+      );
+    }
+  }
+);
 
 export const userSlice = createSlice({
   name: "users",
@@ -94,28 +132,30 @@ export const userSlice = createSlice({
   reducers: {
     reset: (state) => {
       state.isLoading = false;
-      state.isError = false;
       state.isSuccess = false;
+      state.isError = false;
       state.message = "";
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getUsers.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(getUsers.fulfilled, (state, action: PayloadAction<User[]>) => {
-        state.isLoading = false;
+      .addCase(
+        getAllUsers.fulfilled,
+        (state, action: PayloadAction<User[]>) => {
+          state.isSuccess = true;
+          state.users = action.payload;
+        }
+      )
+      .addCase(
+        getAssociates.fulfilled,
+        (state, action: PayloadAction<User[]>) => {
+          state.isSuccess = true;
+          state.users = action.payload;
+        }
+      )
+      .addCase(createUser.fulfilled, (state, action: PayloadAction<User>) => {
         state.isSuccess = true;
-        state.users = action.payload;
-      })
-      .addCase(getBrokers.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(getBrokers.fulfilled, (state, action: PayloadAction<User[]>) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.users = action.payload;
+        state.users.unshift(action.payload);
       })
       .addCase(updateUser.fulfilled, (state, action: PayloadAction<User>) => {
         state.isSuccess = true;
@@ -127,19 +167,29 @@ export const userSlice = createSlice({
         state.isSuccess = true;
         state.users = state.users.filter((user) => user._id !== action.payload);
       })
-      .addMatcher(
-        (action) => action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.isLoading = false;
-          state.isError = true;
-          state.message = action.payload as string;
-        }
-      )
+      .addCase(updateProfile.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.message = "Profile updated successfully!";
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.isSuccess = true;
+        state.message = action.payload;
+      })
       .addMatcher(
         (action) => action.type.endsWith("/pending"),
         (state) => {
+          state.isLoading = true;
           state.isError = false;
           state.isSuccess = false;
+        }
+      )
+      .addMatcher(
+        (action) => action.type.endsWith("/rejected"),
+        (state, action: PayloadAction<string>) => {
+          state.isLoading = false;
+          state.isError = true;
+          state.message = action.payload;
         }
       );
   },

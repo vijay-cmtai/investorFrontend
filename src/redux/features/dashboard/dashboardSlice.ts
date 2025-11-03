@@ -1,81 +1,182 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import API from "../../../api/axios";
+// File: /src/redux/features/dashboard/dashboardSlice.ts
 
-interface StatsData {
-  totalUsers: number;
-  totalProperties: number;
-  totalInquiries: number;
-  pendingPropertiesCount: number;
-  users: {
-    total: number;
-    roles: { [key: string]: number };
-  };
-  properties: {
-    total: number;
-    pending: number;
-  };
-  inquiries: {
-    total: number;
-    statuses: { [key: string]: number };
-  };
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+import { RootState } from "@/redux/store";
+
+const API_URL = "/api/dashboard";
+interface DashboardStats {
+  totalProperties?: number;
+  totalSalesMonth?: number;
+  newLeadsMonth?: number;
+  reportsGenerated?: number;
+  totalSalesValue?: number;
+  totalUsers?: number;
+  activeLeads?: number;
+  monthlyRevenue?: { _id: string; total: number }[];
+  recentSales?: {
+    _id: string;
+    buyer: { name: string; email: string };
+    salePrice: number;
+  }[];
+}
+
+interface Property {
+  _id: string;
+  title: string;
+  location: { city: string };
+  price: number;
+  status: string;
+  [key: string]: any;
+}
+
+interface Lead {
+  _id: string;
+  customerName: string;
+  property?: { title: string };
+  [key: string]: any;
 }
 
 interface DashboardState {
-  stats: StatsData | null;
+  companyStats: DashboardStats | null;
+  adminStats: DashboardStats | null;
+  recentProperties: Property[];
+  recentLeads: Lead[];
   isLoading: boolean;
-  isError: boolean;
-  message: string;
+  error: string | null;
 }
 
 const initialState: DashboardState = {
-  stats: null,
+  companyStats: null,
+  adminStats: null,
+  recentProperties: [],
+  recentLeads: [],
   isLoading: false,
-  isError: false,
-  message: "",
+  error: null,
+};
+const getToken = (getState: () => RootState) => {
+  const {
+    user: { userInfo },
+  } = getState();
+  return userInfo?.token;
 };
 
-export const getDashboardStats = createAsyncThunk<StatsData>(
-  "dashboard/getStats",
-  async (_, thunkAPI) => {
-    try {
-      const response = await API.get("/dashboard/stats");
-      return response.data.data;
-    } catch (error: any) {
-      const message = error.response?.data?.message || "Could not fetch stats.";
-      return thunkAPI.rejectWithValue(message);
-    }
+export const getCompanyDashboardStats = createAsyncThunk<
+  DashboardStats,
+  void,
+  { state: RootState }
+>("dashboard/getCompanyStats", async (_, { getState, rejectWithValue }) => {
+  try {
+    const token = getToken(getState);
+    const { data } = await axios.get(`${API_URL}/company/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.response.data.message);
   }
-);
+});
 
-export const dashboardSlice = createSlice({
+export const getAdminDashboardStats = createAsyncThunk<
+  DashboardStats,
+  void,
+  { state: RootState }
+>("dashboard/getAdminStats", async (_, { getState, rejectWithValue }) => {
+  try {
+    const token = getToken(getState);
+    const { data } = await axios.get(`${API_URL}/admin/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.response.data.message);
+  }
+});
+
+export const getRecentProperties = createAsyncThunk<
+  Property[],
+  void,
+  { state: RootState }
+>("dashboard/getRecentProperties", async (_, { getState, rejectWithValue }) => {
+  try {
+    const token = getToken(getState);
+    const {
+      user: { userInfo },
+    } = getState();
+    const url =
+      userInfo?.role === "admin"
+        ? `${API_URL}/admin/recent-properties`
+        : `${API_URL}/company/recent-properties`;
+    const { data } = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.response.data.message);
+  }
+});
+
+export const getRecentLeads = createAsyncThunk<
+  Lead[],
+  void,
+  { state: RootState }
+>("dashboard/getRecentLeads", async (_, { getState, rejectWithValue }) => {
+  try {
+    const token = getToken(getState);
+    const {
+      user: { userInfo },
+    } = getState();
+    const url =
+      userInfo?.role === "admin"
+        ? `${API_URL}/admin/recent-leads`
+        : `${API_URL}/company/recent-leads`;
+    const { data } = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.response.data.message);
+  }
+});
+
+const dashboardSlice = createSlice({
   name: "dashboard",
   initialState,
-  reducers: {
-    reset: (state) => {
-      state.isLoading = false;
-      state.isError = false;
-      state.message = "";
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(getDashboardStats.pending, (state) => {
-        state.isLoading = true;
+      .addCase(getCompanyDashboardStats.fulfilled, (state, action) => {
+        state.companyStats = action.payload;
       })
-      .addCase(
-        getDashboardStats.fulfilled,
-        (state, action: PayloadAction<StatsData>) => {
-          state.isLoading = false;
-          state.stats = action.payload;
+      .addCase(getAdminDashboardStats.fulfilled, (state, action) => {
+        state.adminStats = action.payload;
+      })
+      .addCase(getRecentProperties.fulfilled, (state, action) => {
+        state.recentProperties = action.payload;
+      })
+      .addCase(getRecentLeads.fulfilled, (state, action) => {
+        state.recentLeads = action.payload;
+      })
+      .addMatcher(
+        (action) => action.type.endsWith("/pending"),
+        (state) => {
+          state.isLoading = true;
         }
       )
-      .addCase(getDashboardStats.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload as string;
-      });
+      .addMatcher(
+        (action) => action.type.endsWith("/fulfilled"),
+        (state) => {
+          state.isLoading = false;
+        }
+      )
+      .addMatcher(
+        (action) => action.type.endsWith("/rejected"),
+        (state, action) => {
+          state.isLoading = false;
+          state.error = action.payload as string;
+        }
+      );
   },
 });
 
-export const { reset } = dashboardSlice.actions;
 export default dashboardSlice.reducer;

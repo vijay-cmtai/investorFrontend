@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { MoreHorizontal, Loader2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
-  getMyProperties,
+  getProperties,
   deleteProperty,
   updateProperty,
   reset,
@@ -53,7 +53,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const EditPropertyModal = ({
+interface EditPropertyModalProps {
+  property: Property | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (id: string, data: any) => void;
+  isLoading: boolean;
+}
+
+const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
   property,
   isOpen,
   onClose,
@@ -71,7 +79,6 @@ const EditPropertyModal = ({
     transaction_type: "sale",
     furnishingStatus: "Unfurnished",
   });
-
   const propertyTypes = [
     "Apartment",
     "Villa",
@@ -101,7 +108,11 @@ const EditPropertyModal = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+    const { id, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: type === "number" ? Number(value) : value,
+    }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -109,12 +120,9 @@ const EditPropertyModal = ({
   };
 
   const handleSave = () => {
-    const data = new FormData();
-    for (const key in formData) {
-      data.append(key, formData[key]);
-    }
-    onSave(property._id, data);
+    onSave(property!._id, formData);
   };
+  if (!property) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -242,7 +250,7 @@ const EditPropertyModal = ({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
             Save Changes
           </Button>
         </DialogFooter>
@@ -250,62 +258,54 @@ const EditPropertyModal = ({
     </Dialog>
   );
 };
-
 const MyProperties = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
   const { properties, isLoading, isError, message } = useAppSelector(
     (state) => state.properties
   );
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(
     null
   );
+  useEffect(() => {
+    dispatch(getProperties());
+    return () => {
+      dispatch(reset());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (isError) {
       toast.error(message as string);
-    }
-    dispatch(getMyProperties());
-    return () => {
       dispatch(reset());
-    };
-  }, [dispatch, isError, message]);
+    }
+  }, [isError, message, dispatch]);
 
   const handleAddNew = () => {
     navigate("/broker/properties/add");
   };
-
   const handleOpenEditModal = (property: Property) => {
     setSelectedProperty(property);
     setIsModalOpen(true);
   };
-
-  const handleUpdate = (id: string, propertyData: FormData) => {
+  const handleUpdate = (id: string, propertyData: any) => {
     dispatch(updateProperty({ id, propertyData }))
       .unwrap()
       .then(() => {
         toast.success("Property updated successfully");
         setIsModalOpen(false);
       })
-      .catch((error) => toast.error(error));
+      .catch((error) => toast.error(error.message || "Failed to update"));
   };
-
   const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this property?")) {
+    if (window.confirm("Are you sure?")) {
       dispatch(deleteProperty(id))
         .unwrap()
-        .then(() => {
-          toast.success("Property deleted successfully");
-        })
-        .catch((error) => {
-          toast.error(error);
-        });
+        .then(() => toast.success("Property deleted successfully"))
+        .catch((error) => toast.error(error.message || "Failed to delete"));
     }
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Approved":
@@ -326,7 +326,6 @@ const MyProperties = () => {
       </div>
     );
   }
-
   return (
     <>
       <Card>
@@ -413,7 +412,6 @@ const MyProperties = () => {
           )}
         </CardContent>
       </Card>
-
       {selectedProperty && (
         <EditPropertyModal
           property={selectedProperty}
@@ -426,5 +424,4 @@ const MyProperties = () => {
     </>
   );
 };
-
 export default MyProperties;

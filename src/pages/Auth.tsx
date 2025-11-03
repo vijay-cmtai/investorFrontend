@@ -1,137 +1,237 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner"; 
+import { toast } from "sonner";
 import { useAppSelector, useAppDispatch } from "@/redux/hooks";
-import { login, register, reset } from "@/redux/features/auth/authSlice";
+import {
+  login,
+  register,
+  reset,
+  verifyOtp,
+} from "@/redux/features/auth/authSlice";
 
 const Auth = () => {
-  const [formData, setFormData] = useState({
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [registerData, setRegisterData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "user" as "user" | "admin" | "broker",
   });
+  const [otp, setOtp] = useState("");
+  const [mainTab, setMainTab] = useState("login");
+  const [registerRole, setRegisterRole] = useState("Customer");
 
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
-  const { user, isLoading, isError, isSuccess, message } = useAppSelector(
-    (state) => state.auth
-  );
+  const navigate = useNavigate();
+  const { user, isLoading, isError, isSuccess, message, status } =
+    useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (isError) {
-      toast.error((message as string) || "An unexpected error occurred.");
-    }
-
-    if (isSuccess && message.includes("User registered successfully")) {
-      toast.success("Account created successfully! Please log in.");
-    }
-
-    if (isSuccess && user) {
-      toast.success("Login successful! Redirecting...");
-      setTimeout(() => {
-        switch (user.role) {
-          case "admin":
-            navigate("/admin");
-            break;
-          case "broker":
-            navigate("/broker");
-            break;
-          case "user":
-            navigate("/users/dashboard");
-            break;
-          default:
-            navigate("/");
-        }
-      }, 800);
-    }
-
-    return () => {
+      toast.error(message);
       dispatch(reset());
-    };
-  }, [user, isError, isSuccess, message, navigate, dispatch]);
+    }
+    if (isSuccess && status === "succeeded" && user) {
+      toast.success(message || `Welcome, ${user.name}!`);
+      switch (user.role) {
+        case "Admin":
+          navigate("/admin");
+          break;
+        case "Associate":
+          navigate("/broker/dashboard");
+          break;
+        case "Company":
+          navigate("/company/dashboard");
+          break;
+        case "Customer":
+          navigate("/users/dashboard");
+          break;
+        default:
+          navigate("/");
+      }
+    }
+    if (isSuccess && status === "verification_pending") {
+      toast.info(message);
+    }
+  }, [user, isError, isSuccess, message, status, navigate, dispatch]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setLoginData({ ...loginData, [e.target.name]: e.target.value });
 
-  const handleRoleChange = (value: "user" | "admin" | "broker") => {
-    setFormData((prev) => ({ ...prev, role: value }));
-  };
+  const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setRegisterData({ ...registerData, [e.target.name]: e.target.value });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const userData = { email: formData.email, password: formData.password };
-    dispatch(login(userData));
+    dispatch(login(loginData));
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
+    if (registerData.password !== registerData.confirmPassword) {
       toast.error("Passwords do not match!");
       return;
     }
-    const userData = {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: formData.role,
-    };
-    dispatch(register(userData));
+    const { name, email, password } = registerData;
+    dispatch(register({ name, email, password, role: registerRole }));
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Welcome to Investorsdeaal</h1>
-        </div>
-        <Card>
+  const handleOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch(verifyOtp({ email: registerData.email, otp }));
+  };
+
+  if (status === "verification_pending") {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
+        <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Authentication</CardTitle>
+            <CardTitle>Verify Your Email</CardTitle>
+            <CardDescription>
+              An OTP has been sent to <strong>{registerData.email}</strong>.
+              Please enter it below to continue.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* त्रुटि होने पर टोस्ट के अलावा एक स्थायी अलर्ट भी दिखाया जा सकता है */}
-            {isError && !isLoading && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{message as string}</AlertDescription>
-              </Alert>
-            )}
+            <form onSubmit={handleOtpSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">One-Time Password (OTP)</Label>
+                <Input
+                  id="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                  maxLength={6}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
+                Verify Account
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
+      <Tabs
+        value={mainTab}
+        onValueChange={setMainTab}
+        className="w-full max-w-md"
+      >
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="login">Login</TabsTrigger>
+          <TabsTrigger value="register">Register</TabsTrigger>
+        </TabsList>
 
-              {/* --- लॉगिन टैब --- */}
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4 pt-4">
+        <TabsContent value="login">
+          <Card>
+            <CardHeader>
+              <CardTitle>Welcome Back</CardTitle>
+              <CardDescription>Sign in to continue.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    name="email"
+                    type="email"
+                    value={loginData.email}
+                    onChange={handleLoginChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Password</Label>
+                  <Input
+                    id="login-password"
+                    name="password"
+                    type="password"
+                    value={loginData.password}
+                    onChange={handleLoginChange}
+                    required
+                  />
+                </div>
+                <div className="text-right text-sm">
+                  <Link to="/forgot-password" className="underline">
+                    Forgot Password?
+                  </Link>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}{" "}
+                  Sign In
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="register">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create an Account</CardTitle>
+              <CardDescription>
+                Choose your account type to get started.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs
+                value={registerRole}
+                onValueChange={setRegisterRole}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="Customer">Customer</TabsTrigger>
+                  <TabsTrigger value="Associate">Associate</TabsTrigger>
+                  <TabsTrigger value="Company">Company</TabsTrigger>
+                  <TabsTrigger value="Admin">Admin</TabsTrigger>
+                </TabsList>
+                <form
+                  onSubmit={handleRegisterSubmit}
+                  className="space-y-4 mt-4"
+                >
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="name">
+                      {registerRole === "Company"
+                        ? "Company Name"
+                        : "Full Name"}
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={registerData.name}
+                      onChange={handleRegisterChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
                     <Input
                       id="email"
                       name="email"
                       type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
+                      value={registerData.email}
+                      onChange={handleRegisterChange}
                       required
                     />
                   </div>
@@ -141,82 +241,19 @@ const Auth = () => {
                       id="password"
                       name="password"
                       type="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}{" "}
-                    Sign In
-                  </Button>
-                </form>
-              </TabsContent>
-
-              {/* --- साइनअप टैब --- */}
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={handleInputChange}
+                      value={registerData.password}
+                      onChange={handleRegisterChange}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Sign up as</Label>
-                    <Select
-                      onValueChange={handleRoleChange}
-                      defaultValue={formData.role}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="broker">Broker</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirmPassword">
-                      Confirm Password
-                    </Label>
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
                     <Input
                       id="confirmPassword"
                       name="confirmPassword"
                       type="password"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
+                      value={registerData.confirmPassword}
+                      onChange={handleRegisterChange}
                       required
                     />
                   </div>
@@ -227,13 +264,12 @@ const Auth = () => {
                     Create Account
                   </Button>
                 </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
-
 export default Auth;

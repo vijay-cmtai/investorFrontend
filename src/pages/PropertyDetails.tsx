@@ -1,23 +1,16 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, FC } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   getPropertyById,
   reset,
+  Property,
 } from "@/redux/features/properties/propertySlice";
 import { toggleWishlist } from "@/redux/features/wishlist/wishlistSlice";
 import { RootState } from "@/redux/store";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
 import {
   ArrowLeft,
   Heart,
@@ -26,23 +19,31 @@ import {
   Bath,
   Square,
   MapPin,
-  Calendar,
   Building,
   Phone,
   Mail,
-  MessageCircle, // WhatsApp के लिए भी यही आइकॉन ठीक है
+  MessageCircle,
+  Armchair,
+  Wind,
+  Dumbbell,
+  ParkingSquare,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
 import { InquiryModal } from "@/components/InquiryModal";
+import { MarkAsSoldModal } from "@/components/MarkAsSoldModal"; // <-- NEW IMPORT
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-const PropertyDetails = () => {
+const PropertyDetails: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }));
+  const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
+  const [isSoldModalOpen, setIsSoldModalOpen] = useState(false); // <-- NEW STATE
+  const [mainImage, setMainImage] = useState<string>("");
 
   const { property, isLoading, isError } = useAppSelector(
     (state: RootState) => state.properties
@@ -63,6 +64,12 @@ const PropertyDetails = () => {
     };
   }, [dispatch, id]);
 
+  useEffect(() => {
+    if (property?.images && property.images.length > 0) {
+      setMainImage(property.images[0]);
+    }
+  }, [property]);
+
   const handleToggleFavorite = () => {
     if (!user) {
       toast.error("Please log in to add properties to your wishlist.");
@@ -75,30 +82,16 @@ const PropertyDetails = () => {
   };
 
   const handleStartChat = () => {
-    const ownerPhone = property?.user?.phone;
-    if (!ownerPhone) {
-      toast.error("Owner's phone number is not available for chat.");
-      return;
-    }
-
-    // फ़ोन नंबर से special characters (+, -, space) हटा दें
-    const cleanedPhone = ownerPhone.replace(/\D/g, "");
-
-    // एक प्री-फिल्ड मैसेज बनाएं
-    const message = `Hello, I'm interested in your property "${property.title}". Can you provide more details?`;
-    const encodedMessage = encodeURIComponent(message);
-
-    // WhatsApp URL बनाएं
-    const whatsappUrl = `https://wa.me/${cleanedPhone}?text=${encodedMessage}`;
-
-    // नई टैब में URL खोलें
+    const ownerPhone = property?.user?.phone || "911234567890";
+    const message = `Hello, I'm interested in your property "${property?.title}".`;
+    const whatsappUrl = `https://wa.me/${ownerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Loading property details...
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
@@ -117,103 +110,90 @@ const PropertyDetails = () => {
     );
   }
 
-  const formatPrice = (price: number, status: string) => {
+  const formatPrice = (price: number, type: string) => {
     const priceStr = new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
       maximumFractionDigits: 0,
     }).format(price);
-    return status === "rent" || status === "lease"
-      ? `${priceStr}/month`
-      : priceStr;
+    return type === "rent" || type === "lease" ? `${priceStr}/month` : priceStr;
   };
 
+  const canMarkAsSold =
+    user && (user.role === "Admin" || user.id === property.user?._id);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/20">
       <div className="container mx-auto px-4 py-8">
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-6 animate-fade-in"
+          className="mb-6 animate-fade-in pl-0"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to listings
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-8">
             <Card className="overflow-hidden animate-scale-in">
-              <Carousel plugins={[plugin.current]} className="w-full">
-                <CarouselContent>
-                  {property.images && property.images.length > 0 ? (
-                    property.images.map((image, index) => (
-                      <CarouselItem key={index}>
-                        <div className="aspect-video">
-                          <img
-                            src={image}
-                            alt={`${property.title} - Image ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      </CarouselItem>
-                    ))
-                  ) : (
-                    <CarouselItem>
-                      <div className="aspect-video bg-muted">
-                        <img
-                          src="https://via.placeholder.com/800x500?text=No+Image"
-                          alt="Placeholder"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </CarouselItem>
-                  )}
-                </CarouselContent>
-                <CarouselPrevious className="absolute left-4" />
-                <CarouselNext className="absolute right-4" />
-              </Carousel>
+              <CardContent className="p-4">
+                <div className="aspect-video w-full overflow-hidden rounded-lg mb-4">
+                  <img
+                    src={
+                      mainImage ||
+                      "https://via.placeholder.com/800x500?text=No+Image"
+                    }
+                    alt={property.title}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                  />
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {property.images.map((image, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "aspect-square rounded-md overflow-hidden cursor-pointer border-2",
+                        mainImage === image
+                          ? "border-primary"
+                          : "border-transparent"
+                      )}
+                      onClick={() => setMainImage(image)}
+                    >
+                      <img
+                        src={image}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
             </Card>
 
             <Card
               className="animate-fade-in"
               style={{ animationDelay: "0.2s" }}
             >
-              <CardContent className="p-6">
+              <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <h1 className="text-3xl font-bold text-foreground mb-2">
+                    <CardTitle className="text-3xl font-bold">
                       {property.title}
-                    </h1>
-                    <p className="text-3xl font-bold text-primary">
-                      {formatPrice(property.price, property.transaction_type)}
-                    </p>
+                    </CardTitle>
+                    <div className="mt-2 flex items-center text-muted-foreground">
+                      <MapPin className="w-5 h-5 mr-2" />
+                      <span>
+                        {property.location?.fullAddress ||
+                          "Address not available"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleToggleFavorite}
-                    >
-                      <Heart
-                        className={`w-5 h-5 ${
-                          isWishlisted
-                            ? "text-red-500 fill-red-500"
-                            : "text-muted-foreground"
-                        }`}
-                      />
-                    </Button>
-                    <Button variant="outline" size="icon">
-                      <Share2 className="w-5 h-5 text-muted-foreground" />
-                    </Button>
-                  </div>
+                  <Badge variant="secondary" className="text-md">
+                    {property.property_type}
+                  </Badge>
                 </div>
-
-                <div className="mt-4 flex items-center text-muted-foreground">
-                  <MapPin className="w-5 h-5 mr-2" />
-                  <span>
-                    {property.location?.fullAddress || "Address not available"}
-                  </span>
-                </div>
-
+              </CardHeader>
+              <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 mt-6 border-t">
                   <InfoBox
                     icon={<Bed />}
@@ -232,64 +212,147 @@ const PropertyDetails = () => {
                   />
                   <InfoBox
                     icon={<Building />}
-                    label="Type"
-                    value={property.property_type}
+                    label="Status"
+                    value={property.furnishingStatus || "Unfurnished"}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="animate-fade-in"
+              style={{ animationDelay: "0.3s" }}
+            >
+              <CardHeader>
+                <CardTitle>About this property</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {property.description}
+                </p>
+              </CardContent>
+            </Card>
+            <Card
+              className="animate-fade-in"
+              style={{ animationDelay: "0.4s" }}
+            >
+              <CardHeader>
+                <CardTitle>Amenities</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <AmenityItem icon={<Armchair />} label="Furnished" />
+                <AmenityItem icon={<Wind />} label="Air Conditioning" />
+                <AmenityItem icon={<ParkingSquare />} label="Car Parking" />
+                <AmenityItem icon={<Dumbbell />} label="Gym" />
               </CardContent>
             </Card>
           </div>
 
           <div className="space-y-6">
-            {property.user && (
-              <Card
-                className="sticky top-24 animate-fade-in"
-                style={{ animationDelay: "0.3s" }}
-              >
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4">Contact Owner</h3>
-                  <div className="space-y-4">
+            <Card
+              className="sticky top-24 animate-fade-in"
+              style={{ animationDelay: "0.5s" }}
+            >
+              <CardHeader className="text-center">
+                <p className="text-3xl font-bold text-primary">
+                  {formatPrice(property.price, property.transaction_type)}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleToggleFavorite}
+                  >
+                    <Heart
+                      className={cn(
+                        "w-5 h-5",
+                        isWishlisted
+                          ? "text-red-500 fill-red-500"
+                          : "text-muted-foreground"
+                      )}
+                    />
+                  </Button>
+                  <Button variant="outline" size="icon">
+                    <Share2 className="w-5 h-5 text-muted-foreground" />
+                  </Button>
+                </div>
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-4 text-center">
+                    Contact Owner
+                  </h3>
+                  <div className="flex items-center gap-3 mb-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={`https://avatar.iran.liara.run/public/boy?username=${property.user?.email}`}
+                      />
+                      <AvatarFallback>
+                        {property.user?.name?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
-                      <p className="font-medium">
-                        {property.user?.name || "Owner Name"}
+                      <p className="font-semibold">
+                        {property.user?.name || "Owner"}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Property Owner
+                        {property.user?.role}
                       </p>
                     </div>
-                    <div className="space-y-2">
-                      <Button className="w-full">
-                        <Phone className="w-4 h-4 mr-2" /> Call Now
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleStartChat}
-                        disabled={!property.user?.phone}
-                      >
-                        <MessageCircle className="w-4 h-4 mr-2" /> Start Chat
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="w-full"
-                        onClick={() => setIsModalOpen(true)}
-                      >
-                        <Mail className="w-4 h-4 mr-2" /> Send Inquiry
-                      </Button>
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      onClick={handleStartChat}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" /> Chat on
+                      WhatsApp
+                    </Button>
+                    <Button
+                      className="w-full"
+                      onClick={() =>
+                        toast.info(`Calling ${property.user?.name}...`)
+                      }
+                    >
+                      <Phone className="w-4 h-4 mr-2" /> Call Now
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="w-full"
+                      onClick={() => setIsEnquiryModalOpen(true)}
+                    >
+                      <Mail className="w-4 h-4 mr-2" /> Send Inquiry
+                    </Button>
+                    {/* --- NEW BUTTON: "MARK AS SOLD" --- */}
+                    {canMarkAsSold && (
+                      <Button
+                        variant="default"
+                        className="w-full"
+                        onClick={() => setIsSoldModalOpen(true)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" /> Mark as Sold
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
 
       {id && (
         <InquiryModal
-          isOpen={isModalOpen}
-          onOpenChange={setIsModalOpen}
+          isOpen={isEnquiryModalOpen}
+          onOpenChange={setIsEnquiryModalOpen}
           propertyId={id}
+        />
+      )}
+      {id && (
+        <MarkAsSoldModal
+          property={property}
+          isOpen={isSoldModalOpen}
+          onOpenChange={setIsSoldModalOpen}
         />
       )}
     </div>
@@ -305,12 +368,23 @@ const InfoBox = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="flex items-center p-3 bg-muted/30 rounded-lg">
-    <div className="mr-3 text-primary">{icon}</div>
-    <div>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="font-semibold">{value}</p>
-    </div>
+  <div className="flex flex-col items-center text-center p-3 rounded-lg bg-muted/40">
+    <div className="text-primary mb-2">{icon}</div>
+    <p className="text-sm text-muted-foreground">{label}</p>
+    <p className="font-semibold">{value}</p>
+  </div>
+);
+
+const AmenityItem = ({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) => (
+  <div className="flex items-center gap-3">
+    <div className="text-primary">{icon}</div>
+    <span>{label}</span>
   </div>
 );
 

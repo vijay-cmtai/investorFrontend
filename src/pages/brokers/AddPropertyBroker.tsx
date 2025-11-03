@@ -7,7 +7,6 @@ import {
   reset,
 } from "@/redux/features/properties/propertySlice";
 import { toast } from "sonner";
-
 const AddPropertyBroker = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -15,14 +14,13 @@ const AddPropertyBroker = () => {
   const { isLoading, isError, isSuccess, message } = useAppSelector(
     (state) => state.properties
   );
-
   useEffect(() => {
     if (isError) {
       toast.error(message as string);
     }
     if (isSuccess) {
       toast.success("Property submitted for approval!");
-      navigate("/broker/properties"); // ब्रोकर के प्रॉपर्टीज पेज पर भेजें
+      navigate("/broker/properties"); 
     }
     return () => {
       dispatch(reset());
@@ -32,7 +30,6 @@ const AddPropertyBroker = () => {
   const handleBrokerSubmit = (formData: FormData) => {
     dispatch(createProperty(formData));
   };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <PropertyForm
@@ -44,5 +41,4 @@ const AddPropertyBroker = () => {
     </div>
   );
 };
-
 export default AddPropertyBroker;

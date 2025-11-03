@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Menu, X, Heart, User } from "lucide-react";
+import { Menu, X, Heart, User, Building } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/redux/hooks";
 import { logout, reset as resetAuth } from "@/redux/features/auth/authSlice";
 import { getWishlist } from "@/redux/features/wishlist/wishlistSlice";
+import { toast } from "sonner";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -34,6 +35,7 @@ const Header = () => {
     dispatch(logout());
     dispatch(resetAuth());
     navigate("/");
+    toast.success("You have been signed out.");
   };
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -41,11 +43,17 @@ const Header = () => {
   let profileLink = "/";
   if (user) {
     switch (user.role) {
-      case "admin":
+      case "Admin":
         profileLink = "/admin/dashboard";
         break;
-      case "broker":
+      case "Company":
+        profileLink = "/company/dashboard";
+        break;
+      case "Associate":
         profileLink = "/broker/dashboard";
+        break;
+      case "Customer":
+        profileLink = "/users/profile";
         break;
       default:
         profileLink = "/users/profile";
@@ -55,13 +63,28 @@ const Header = () => {
   const handlePostPropertyClick = () => {
     closeMobileMenu();
     if (!user) {
+      toast.info("Please log in to post a property.");
       navigate("/auth");
       return;
     }
-    const path =
-      user.role === "admin"
-        ? "/admin/properties/add"
-        : "/broker/properties/add";
+
+    let path = "";
+    switch (user.role) {
+      case "Admin":
+        path = "/admin/add-property";
+        break;
+      case "Company":
+        path = "/company/properties/add";
+        break;
+      case "Associate":
+        path = "/broker/properties/add";
+        break;
+      default:
+        toast.error(
+          "Only Admins, Companies, or Associates can post properties."
+        );
+        return;
+    }
     navigate(path);
   };
 
@@ -70,11 +93,8 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <img
-              src="/logo1.png"
-              alt="Investorsdeal Logo"
-              className="h-28 w-auto ml-5"
-            />
+            <Building className="h-6 w-6 text-primary" />
+            <span className="font-bold text-lg">Investorsdeaal</span>
           </Link>
 
           <nav className="hidden md:flex items-center space-x-6">
@@ -82,14 +102,21 @@ const Header = () => {
               <Link
                 key={item.label}
                 to={item.href}
-                className="text-sm font-medium text-muted-foreground hover:text-primary"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-4">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handlePostPropertyClick}
+            >
+              Post Property
+            </Button>
             {user ? (
               <>
                 <Link to="/wishlist">
@@ -98,7 +125,7 @@ const Header = () => {
                     {itemIds && itemIds.length > 0 && (
                       <Badge
                         variant="destructive"
-                        className="absolute -top-2 -right-2 px-1.5 py-0.5 text-xs"
+                        className="absolute -top-2 -right-2 h-5 w-5 justify-center rounded-full p-0"
                       >
                         {itemIds.length}
                       </Badge>
@@ -110,7 +137,7 @@ const Header = () => {
                     <User className="h-4 w-4 mr-2" /> Profile
                   </Button>
                 </Link>
-                <Button variant="destructive" size="sm" onClick={handleSignOut}>
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
                   Sign Out
                 </Button>
               </>
@@ -118,23 +145,11 @@ const Header = () => {
               <>
                 <Link to="/auth">
                   <Button variant="ghost" size="sm">
-                    Login
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button variant="default" size="sm">
-                    Sign Up
+                    Login / Sign Up
                   </Button>
                 </Link>
               </>
             )}
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handlePostPropertyClick}
-            >
-              Post Property
-            </Button>
           </div>
 
           <Button
@@ -208,7 +223,7 @@ const Header = () => {
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="w-full justify-start"
+                    className="w-full"
                     onClick={handleSignOut}
                   >
                     Sign Out

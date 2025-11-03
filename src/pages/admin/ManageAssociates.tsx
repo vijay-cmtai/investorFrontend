@@ -8,7 +8,7 @@ import { MoreHorizontal, Loader2 } from "lucide-react";
 
 import { AppDispatch, RootState } from "../../redux/store";
 import {
-  getBrokers,
+  getAssociates,
   updateUser,
   deleteUser,
 } from "@/redux/features/users/userSlice";
@@ -61,59 +61,62 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type User = {
+type Associate = {
   _id: string;
   name: string;
   email: string;
-  agency: string;
-  status: "Active" | "Inactive";
+  isActive: boolean;
   role: string;
+  company?: {
+    _id: string;
+    name: string;
+  };
 };
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Invalid email address."),
-  agency: z.string().optional(),
-  status: z.enum(["Active", "Inactive"]),
+  isActive: z.string().transform((val) => val === "true"),
 });
 
-interface BrokerFormModalProps {
+interface AssociateFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  broker: User | null;
+  associate: Associate | null;
 }
 
-const BrokerFormModal: React.FC<BrokerFormModalProps> = ({
+const AssociateFormModal: React.FC<AssociateFormModalProps> = ({
   isOpen,
   onClose,
-  broker,
+  associate,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", email: "", agency: "", status: "Active" },
+    defaultValues: { name: "", email: "", isActive: true },
   });
 
   useEffect(() => {
-    if (broker) {
+    if (associate) {
       form.reset({
-        name: broker.name,
-        email: broker.email,
-        agency: broker.agency || "",
-        status: broker.status,
+        name: associate.name,
+        email: associate.email,
+        isActive: associate.isActive,
       });
     }
-  }, [broker, form]);
+  }, [associate, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!broker) return;
+    if (!associate) return;
     try {
-      await dispatch(updateUser({ id: broker._id, userData: values })).unwrap();
-      toast.success("Broker updated successfully!");
+      await dispatch(
+        updateUser({ id: associate._id, userData: values })
+      ).unwrap();
+      toast.success("Associate updated successfully!");
       onClose();
     } catch (error: any) {
-      toast.error(error || "An error occurred.");
+      toast.error(error.message || "An error occurred.");
     }
   };
 
@@ -121,9 +124,9 @@ const BrokerFormModal: React.FC<BrokerFormModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Broker</DialogTitle>
+          <DialogTitle>Edit Associate</DialogTitle>
           <DialogDescription>
-            Update the details of the broker.
+            Update the details of the associate.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -155,27 +158,14 @@ const BrokerFormModal: React.FC<BrokerFormModalProps> = ({
               )}
             />
             <FormField
-              name="agency"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Agency (Optional)</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="status"
+              name="isActive"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    defaultValue={String(field.value)}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -183,8 +173,8 @@ const BrokerFormModal: React.FC<BrokerFormModalProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -206,38 +196,42 @@ const BrokerFormModal: React.FC<BrokerFormModalProps> = ({
   );
 };
 
-const ManageBrokers = () => {
+const ManageAssociates = () => {
   const dispatch = useDispatch<AppDispatch>();
   const {
-    users: brokers,
+    users: associates,
     isLoading,
     isError,
     message,
   } = useSelector((state: RootState) => state.users);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBroker, setSelectedBroker] = useState<User | null>(null);
+  const [selectedAssociate, setSelectedAssociate] = useState<Associate | null>(
+    null
+  );
 
   useEffect(() => {
-    dispatch(getBrokers());
+    dispatch(getAssociates());
   }, [dispatch]);
 
-  const handleOpenModal = (broker: User) => {
-    setSelectedBroker(broker);
+  const handleOpenModal = (associate: Associate) => {
+    setSelectedAssociate(associate);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedBroker(null);
+    setSelectedAssociate(null);
   };
 
-  const handleDeleteBroker = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this broker?")) {
+  const handleDeleteAssociate = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this associate?")) {
       dispatch(deleteUser(id))
         .unwrap()
-        .then(() => toast.success("Broker deleted successfully"))
-        .catch((error) => toast.error(error || "Failed to delete broker"));
+        .then(() => toast.success("Associate deleted successfully"))
+        .catch((error) =>
+          toast.error(error.message || "Failed to delete associate")
+        );
     }
   };
 
@@ -245,16 +239,16 @@ const ManageBrokers = () => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Manage Brokers</CardTitle>
-          <CardDescription>View, update, or delete brokers.</CardDescription>
+          <CardTitle>Manage Associates</CardTitle>
+          <CardDescription>View, update, or delete associates.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Broker ID</TableHead>
+                <TableHead>Associate ID</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Agency</TableHead>
+                <TableHead>Company</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -277,19 +271,19 @@ const ManageBrokers = () => {
                     {message}
                   </TableCell>
                 </TableRow>
-              ) : brokers.length > 0 ? (
-                brokers.map((broker) => (
-                  <TableRow key={broker._id}>
+              ) : associates.length > 0 ? (
+                associates.map((associate) => (
+                  <TableRow key={associate._id}>
                     <TableCell className="font-mono text-xs">
-                      {broker._id.slice(-6)}
+                      {associate._id.slice(-6)}
                     </TableCell>
-                    <TableCell>{broker.name}</TableCell>
-                    <TableCell>{broker.agency || "N/A"}</TableCell>
+                    <TableCell>{associate.name}</TableCell>
+                    <TableCell>{associate.company?.name || "N/A"}</TableCell>
                     <TableCell className="text-center">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${broker.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                        className={`px-2 py-1 rounded-full text-xs ${associate.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
                       >
-                        {broker.status}
+                        {associate.isActive ? "Active" : "Inactive"}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -302,13 +296,15 @@ const ManageBrokers = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem
-                            onSelect={() => handleOpenModal(broker)}
+                            onSelect={() => handleOpenModal(associate)}
                           >
-                            Edit Broker
+                            Edit Associate
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onSelect={() => handleDeleteBroker(broker._id)}
+                            onSelect={() =>
+                              handleDeleteAssociate(associate._id)
+                            }
                           >
                             Delete
                           </DropdownMenuItem>
@@ -320,7 +316,7 @@ const ManageBrokers = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-10">
-                    No brokers found.
+                    No associates found.
                   </TableCell>
                 </TableRow>
               )}
@@ -329,13 +325,13 @@ const ManageBrokers = () => {
         </CardContent>
       </Card>
 
-      <BrokerFormModal
+      <AssociateFormModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        broker={selectedBroker}
+        associate={selectedAssociate}
       />
     </>
   );
 };
 
-export default ManageBrokers;
+export default ManageAssociates;
