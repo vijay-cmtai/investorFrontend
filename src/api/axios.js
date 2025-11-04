@@ -1,8 +1,8 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_BACKEND_URL?.replace(/\/+$/, "") + "/api/v1";
-
-const API = axios.create({ baseURL });
+const API = axios.create({
+  baseURL: import.meta.env.VITE_BACKEND_URL + "/api/v1",
+});
 
 API.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
