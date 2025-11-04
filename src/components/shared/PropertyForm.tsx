@@ -29,15 +29,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2, UploadCloud, X, IndianRupee } from "lucide-react";
+import { Property } from "@/redux/features/properties/propertySlice"; // Property type import karein
 
 const formSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters."),
-  price: z.coerce.number().min(1, "Price is required."),
+  price: z.coerce.number().min(1, "Price must be a positive number."),
   description: z
     .string()
     .min(20, "Description must be at least 20 characters."),
@@ -45,45 +48,73 @@ const formSchema = z.object({
   district: z.string().min(1, "District is required."),
   area: z.string().min(1, "Area is required."),
   fullAddress: z.string().min(1, "Full address is required."),
-  pincode: z.string().min(6, "Pincode must be 6 digits.").max(6),
+  pincode: z.string().length(6, "Pincode must be 6 digits."),
   property_type: z.string({ required_error: "Property type is required." }),
-  transaction_type: z.string(),
-  bedrooms: z.coerce.number(),
-  bathrooms: z.coerce.number(),
+  transaction_type: z.string({
+    required_error: "Transaction type is required.",
+  }),
+  bedrooms: z.coerce.number().min(0),
+  bathrooms: z.coerce.number().min(0),
   square_feet: z.coerce.number().min(1, "Area is required."),
-  furnishingStatus: z.string(),
+  furnishingStatus: z.string({
+    required_error: "Furnishing status is required.",
+  }),
   amenities: z.array(z.string()).optional(),
   isFeatured: z.boolean().default(false),
   commissionPercentage: z.coerce.number().optional(),
   assignedAssociate: z.string().optional(),
-  images: z.any(),
+  images: z.any().optional(), // Make images optional for updates
+  yearBuilt: z.coerce.number().optional(),
+  floor: z.coerce.number().optional(),
+  totalFloors: z.coerce.number().optional(),
+  parkingSpaces: z.coerce.number().optional(),
 });
+
+type PropertyFormData = z.infer<typeof formSchema>;
 
 interface PropertyFormProps {
   onSubmit: (formData: FormData) => void;
   isLoading: boolean;
-  title: string;
-  description: string;
+  initialData?: Property | null; // <-- YEH NAYA PROP HAI
 }
 
 const PropertyForm: React.FC<PropertyFormProps> = ({
   onSubmit,
   isLoading,
-  title,
-  description,
+  initialData,
 }) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { users: associates } = useAppSelector((state) => state.users);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const mode = initialData ? "edit" : "add";
+
+  const form = useForm<PropertyFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      transaction_type: "sale",
-      furnishingStatus: "Unfurnished",
-      isFeatured: false,
-      amenities: [],
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      price: initialData?.price || 0,
+      bedrooms: initialData?.bedrooms || 0,
+      bathrooms: initialData?.bathrooms || 0,
+      square_feet: initialData?.square_feet || 0,
+      property_type: initialData?.property_type || "",
+      transaction_type: initialData?.transaction_type || "sale",
+      furnishingStatus: initialData?.furnishingStatus || "Unfurnished",
+      city: initialData?.location?.city || "",
+      district: initialData?.location?.district || "",
+      area: initialData?.location?.area || "",
+      fullAddress: initialData?.location?.fullAddress || "",
+      pincode: initialData?.location?.pincode || "",
+      amenities: initialData?.amenities || [],
+      isFeatured: initialData?.isFeatured || false,
+      commissionPercentage: initialData?.commission?.percentage || 2,
+      assignedAssociate: initialData?.commission?.assignedAssociate || "",
+      yearBuilt: initialData?.yearBuilt || undefined,
+      floor: initialData?.floor || undefined,
+      totalFloors: initialData?.totalFloors || undefined,
+      parkingSpaces: initialData?.parkingSpaces || 0,
     },
   });
 
@@ -91,12 +122,22 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     if (user?.role === "Admin" || user?.role === "Company") {
       dispatch(getAssociates());
     }
-  }, [dispatch, user]);
+    // Edit mode mein existing images ka preview set karein
+    if (mode === "edit" && initialData?.images) {
+      setImagePreviews(initialData.images);
+    }
+  }, [dispatch, user, mode, initialData]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles) => {
       const currentFiles = form.getValues("images") || [];
-      if (currentFiles.length + acceptedFiles.length > 5) {
+      const totalImages =
+        (mode === "edit"
+          ? imagePreviews.length - (initialData?.images?.length || 0)
+          : 0) +
+        currentFiles.length +
+        acceptedFiles.length;
+      if (totalImages > 5) {
         toast.error("You can upload a maximum of 5 images.");
         return;
       }
@@ -110,16 +151,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp"] },
   });
 
-  const handleRemoveImage = (index: number) => {
-    const currentFiles = form.getValues("images") || [];
-    const newFiles = currentFiles.filter((_, i) => i !== index);
-    form.setValue("images", newFiles);
+  const handleRemoveImage = (index: number, previewUrl: string) => {
+    // Implement logic to handle removing existing vs new images if needed
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    URL.revokeObjectURL(imagePreviews[index]);
     setImagePreviews(newPreviews);
+    // You might need more complex logic to track which old images to delete
   };
 
-  const onFormSubmit = (values: z.infer<typeof formSchema>) => {
+  const onFormSubmit = (values: PropertyFormData) => {
     const data = new FormData();
     const location = {
       city: values.city,
@@ -130,6 +169,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     };
     data.append("location", JSON.stringify(location));
 
+    // Sabhi fields ko append karein
     Object.entries(values).forEach(([key, value]) => {
       if (
         ![
@@ -171,13 +211,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle className="text-2xl">
+          {mode === "edit" ? "Edit Property" : "Add New Property"}
+        </CardTitle>
+        <CardDescription>
+          {mode === "edit"
+            ? "Update the details for this property."
+            : "Fill in the details to list a new property."}
+        </CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onFormSubmit)}>
           <CardContent className="space-y-8">
-            {/* --- Basic Information --- */}
             <div className="space-y-6">
               <h3 className="text-lg font-medium border-b pb-2">
                 Basic Information
@@ -225,8 +270,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 )}
               />
             </div>
-
-            {/* --- Location Details --- */}
             <div className="space-y-6 pt-6 border-t">
               <h3 className="text-lg font-medium border-b pb-2">
                 Location Details
@@ -301,8 +344,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 />
               </div>
             </div>
-
-            {/* --- Property Specifications --- */}
             <div className="space-y-6 pt-6 border-t">
               <h3 className="text-lg font-medium border-b pb-2">
                 Property Specifications
@@ -347,6 +388,60 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                     </FormItem>
                   )}
                 />
+                <FormField
+                  name="parkingSpaces"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Parking</Label>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  name="yearBuilt"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Year Built</Label>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="floor"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Floor</Label>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="totalFloors"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>Total Floors</Label>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
@@ -368,6 +463,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                           <SelectItem value="Apartment">Apartment</SelectItem>
                           <SelectItem value="Villa">Villa</SelectItem>
                           <SelectItem value="Plot">Plot</SelectItem>
+                          <SelectItem value="Commercial Space">
+                            Commercial Space
+                          </SelectItem>
+                          <SelectItem value="Office">Office</SelectItem>
+                          <SelectItem value="Farmhouse">Farmhouse</SelectItem>
+                          <SelectItem value="Builder Floor">
+                            Builder Floor
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -393,9 +496,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                           <SelectItem value="sale">For Sale</SelectItem>
                           <SelectItem value="rent">For Rent</SelectItem>
                           <SelectItem value="lease">For Lease</SelectItem>
-                          <SelectItem value="commercial">
-                            For Commercial
-                          </SelectItem>
+                          <SelectItem value="commercial">Commercial</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -407,7 +508,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <Label>Furnishing Status</Label>
+                      <Label>Furnishing</Label>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
@@ -433,8 +534,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 />
               </div>
             </div>
-
-            {/* --- Commission Details (Sirf Admin/Company ke liye) --- */}
             {(user?.role === "Admin" || user?.role === "Company") && (
               <div className="space-y-6 pt-6 border-t">
                 <h3 className="text-lg font-medium border-b pb-2">
@@ -487,8 +586,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 </div>
               </div>
             )}
-
-            {/* --- Features & Images --- */}
             <div className="space-y-6 pt-6 border-t">
               <h3 className="text-lg font-medium border-b pb-2">
                 Features & Images
@@ -565,7 +662,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                           variant="destructive"
                           size="icon"
                           className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md"
-                          onClick={() => handleRemoveImage(index)}
+                          onClick={() => handleRemoveImage(index, preview)}
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -601,7 +698,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
-              {isLoading ? "Submitting..." : "Submit Property"}
+              {isLoading
+                ? "Submitting..."
+                : mode === "edit"
+                  ? "Save Changes"
+                  : "Submit Property"}
             </Button>
           </CardFooter>
         </form>

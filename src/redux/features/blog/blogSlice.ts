@@ -9,7 +9,8 @@ export interface Post {
   imageUrl: string;
   category: string;
   content: string;
-  author: { name: string };
+  author: { name: string; _id: string };
+  status: string;
   createdAt: string;
 }
 
@@ -19,6 +20,10 @@ interface CreatePostData {
   excerpt: string;
   imageUrl: string;
   category: string;
+}
+
+interface UpdatePostData extends Partial<CreatePostData> {
+  status?: string;
 }
 
 interface BlogState {
@@ -53,6 +58,20 @@ export const getAllPosts = createAsyncThunk(
   }
 );
 
+export const getAdminAllPosts = createAsyncThunk(
+  "blog/getAdminAll",
+  async (_, thunkAPI) => {
+    try {
+      const response = await API.get("/blogs/admin/all");
+      return response.data.data;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch all posts"
+      );
+    }
+  }
+);
+
 export const getPostBySlug = createAsyncThunk(
   "blog/getBySlug",
   async (slug: string, thunkAPI) => {
@@ -81,6 +100,37 @@ export const createPost = createAsyncThunk(
   }
 );
 
+export const updatePost = createAsyncThunk(
+  "blog/update",
+  async (
+    { id, postData }: { id: string; postData: UpdatePostData },
+    thunkAPI
+  ) => {
+    try {
+      const response = await API.put(`/blogs/${id}`, postData);
+      return response.data.data;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to update post"
+      );
+    }
+  }
+);
+
+export const deletePost = createAsyncThunk(
+  "blog/delete",
+  async (id: string, thunkAPI) => {
+    try {
+      await API.delete(`/blogs/${id}`);
+      return id;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to delete post"
+      );
+    }
+  }
+);
+
 export const blogSlice = createSlice({
   name: "blog",
   initialState,
@@ -102,10 +152,12 @@ export const blogSlice = createSlice({
         state.isLoading = false;
         state.posts = action.payload;
       })
-      .addCase(getAllPosts.rejected, (state, action) => {
+      .addCase(getAdminAllPosts.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getAdminAllPosts.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload as string;
+        state.posts = action.payload;
       })
       .addCase(getPostBySlug.pending, (state) => {
         state.isLoading = true;
@@ -113,11 +165,6 @@ export const blogSlice = createSlice({
       .addCase(getPostBySlug.fulfilled, (state, action) => {
         state.isLoading = false;
         state.post = action.payload;
-      })
-      .addCase(getPostBySlug.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload as string;
       })
       .addCase(createPost.pending, (state) => {
         state.isLoading = true;
@@ -127,11 +174,32 @@ export const blogSlice = createSlice({
         state.isSuccess = true;
         state.posts.unshift(action.payload);
       })
-      .addCase(createPost.rejected, (state, action) => {
+      .addCase(updatePost.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(updatePost.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.isError = true;
-        state.message = action.payload as string;
-      });
+        state.isSuccess = true;
+        state.posts = state.posts.map((p) =>
+          p._id === action.payload._id ? action.payload : p
+        );
+      })
+      .addCase(deletePost.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(deletePost.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.posts = state.posts.filter((p) => p._id !== action.payload);
+      })
+      .addMatcher(
+        (action) => action.type.endsWith("/rejected"),
+        (state, action) => {
+          state.isLoading = false;
+          state.isError = true;
+          state.message = action.payload as string;
+        }
+      );
   },
 });
 

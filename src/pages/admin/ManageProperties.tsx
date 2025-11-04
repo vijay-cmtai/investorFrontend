@@ -1,9 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { CSVLink } from "react-csv";
 import {
   MoreHorizontal,
@@ -17,7 +14,6 @@ import {
   getProperties,
   deleteProperty,
   approveProperty,
-  updateProperty,
   reset,
   Property,
 } from "@/redux/features/properties/propertySlice";
@@ -48,145 +44,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const formSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters."),
-  description: z
-    .string()
-    .min(20, "Description must be at least 20 characters."),
-  price: z.coerce.number().min(1, "Price must be a positive number."),
-});
-
-interface EditPropertyModalProps {
-  property: Property | null;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
-  property,
-  isOpen,
-  onClose,
-}) => {
-  const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector((state) => state.properties);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { title: "", description: "", price: 0 },
-  });
-
-  useEffect(() => {
-    if (property) {
-      form.reset({
-        title: property.title,
-        description: property.description,
-        price: property.price,
-      });
-    }
-  }, [property, form]);
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (!property) return;
-    dispatch(updateProperty({ id: property._id, propertyData: values }))
-      .unwrap()
-      .then(() => {
-        toast.success("Property updated successfully!");
-        onClose();
-      })
-      .catch((error) =>
-        toast.error(error.message || "Failed to update property.")
-      );
-  };
-
-  if (!property) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Edit Property</DialogTitle>
-          <DialogDescription>
-            Make changes to your property. Click save when you're done.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 py-4"
-          >
-            <FormField
-              name="title"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="description"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea rows={5} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="price"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price (INR)</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-};
+import EditPropertyModal from "@/components/admin/EditPropertyModal"; // Naya modal import karein
 
 const ManageProperties = () => {
   const navigate = useNavigate();
@@ -222,16 +82,11 @@ const ManageProperties = () => {
     return props;
   }, [properties, activeTab, searchQuery]);
 
-  const csvHeaders = [
-    { label: "Property ID", key: "_id" },
-    { label: "Title", key: "title" },
-    { label: "Price", key: "price" },
-    { label: "Status", key: "status" },
-    { label: "Uploaded By", key: "uploadedBy" },
-    { label: "City", key: "city" },
-  ];
   const csvData = filteredProperties.map((prop) => ({
-    ...prop,
+    _id: prop._id,
+    title: prop.title,
+    price: prop.price,
+    status: prop.status,
     uploadedBy: prop.user?.name || "N/A",
     city: prop.location?.city || "N/A",
   }));
@@ -240,6 +95,7 @@ const ManageProperties = () => {
     setSelectedProperty(property);
     setIsModalOpen(true);
   };
+
   const handleDelete = (id: string) => {
     if (window.confirm("Are you sure?")) {
       dispatch(deleteProperty(id))
@@ -248,12 +104,14 @@ const ManageProperties = () => {
         .catch((error) => toast.error(error || "Failed to delete property."));
     }
   };
+
   const handleApprove = (id: string) => {
     dispatch(approveProperty(id))
       .unwrap()
       .then(() => toast.success("Property approved."))
       .catch((error) => toast.error(error || "Failed to approve property."));
   };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Approved":
@@ -287,11 +145,7 @@ const ManageProperties = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <CSVLink
-              data={csvData}
-              headers={csvHeaders}
-              filename={`properties_${activeTab}.csv`}
-            >
+            <CSVLink data={csvData} filename={`properties_${activeTab}.csv`}>
               <Button size="sm" variant="outline" className="h-9 gap-1">
                 <File className="h-3.5 w-3.5" />
                 <span>Export</span>

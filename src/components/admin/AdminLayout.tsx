@@ -52,6 +52,7 @@ import CommissionManagement from "@/pages/admin/CommissionManagement";
 import PropertyReports from "@/pages/admin/PropertyReports";
 import RolesAccessControl from "@/pages/admin/RolesAccessControl";
 import BlogPost from "@/pages/admin/CreatePost";
+import ManageBlogs from "@/pages/admin/ManageBlogs";
 
 const sidebarNavItems = [
   { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -59,6 +60,7 @@ const sidebarNavItems = [
   { title: "Properties", href: "/admin/properties", icon: Building2 },
   { title: "Orders & Deals", href: "/admin/orders", icon: ShoppingCart },
   { title: "Blog Post", href: "/admin/blog-post", icon: Building2 },
+  {title: "Manage Blogs", href: "/admin/manage-blogs", icon: Building2 },
   { title: "Leads", href: "/admin/leads", icon: Target },
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "MLM System", href: "/admin/mlm-system", icon: Network },
@@ -200,6 +202,7 @@ const AdminLayout = () => {
             <Route path="roles" element={<RolesAccessControl />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="blog-post" element={<BlogPost />} />
+            <Route path="manage-blogs" element={<ManageBlogs />} />
           </Routes>
         </main>
       </div>

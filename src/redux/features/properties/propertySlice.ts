@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../../api/axios";
 
+// Interfaces remain mostly the same
 export interface Review {
   _id: string;
   rating: number;
@@ -21,7 +22,13 @@ export interface Property {
   transaction_type: string;
   furnishingStatus: string;
   images?: string[];
-  location: { city: string; fullAddress: string };
+  location: {
+    city: string;
+    fullAddress: string;
+    district: string;
+    area: string;
+    pincode: string;
+  };
   status: string;
   user?: {
     _id: string;
@@ -34,13 +41,17 @@ export interface Property {
   reviews?: Review[];
   averageRating: number;
   numReviews: number;
+  isFeatured?: boolean;
+  commission?: { percentage?: number; assignedAssociate?: string };
+  yearBuilt?: number;
+  floor?: number;
+  totalFloors?: number;
+  parkingSpaces?: number;
+  amenities?: string[];
 }
 
-interface UpdatePropertyPayload {
-  title: string;
-  description: string;
-  price: number;
-}
+// This interface is no longer needed in this specific way
+// interface UpdatePropertyPayload { ... }
 
 interface PropertyState {
   properties: Property[];
@@ -65,6 +76,7 @@ interface GetPropertiesFilters {
   city?: string;
 }
 
+// getProperties thunk is fine
 export const getProperties = createAsyncThunk<
   Property[],
   GetPropertiesFilters | void
@@ -84,6 +96,7 @@ export const getProperties = createAsyncThunk<
   }
 });
 
+// getPropertyById thunk is fine
 export const getPropertyById = createAsyncThunk<Property, string>(
   "properties/getById",
   async (id, thunkAPI) => {
@@ -98,11 +111,14 @@ export const getPropertyById = createAsyncThunk<Property, string>(
   }
 );
 
+// createProperty thunk is fine
 export const createProperty = createAsyncThunk<Property, FormData>(
   "properties/create",
   async (propertyData, thunkAPI) => {
     try {
-      const response = await API.post("/properties", propertyData);
+      const response = await API.post("/properties", propertyData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return response.data.data;
     } catch (error: any) {
       const message =
@@ -112,12 +128,15 @@ export const createProperty = createAsyncThunk<Property, FormData>(
   }
 );
 
+// --- YEH THUNK UPDATE KIYA GAYA HAI ---
 export const updateProperty = createAsyncThunk<
   Property,
-  { id: string; propertyData: UpdatePropertyPayload }
+  { id: string; propertyData: FormData } // Ab yeh FormData accept karega
 >("properties/update", async ({ id, propertyData }, thunkAPI) => {
   try {
-    const response = await API.put(`/properties/${id}`, propertyData);
+    const response = await API.put(`/properties/${id}`, propertyData, {
+      headers: { "Content-Type": "multipart/form-data" }, // Important for file uploads
+    });
     return response.data.data;
   } catch (error: any) {
     const message =
@@ -126,6 +145,7 @@ export const updateProperty = createAsyncThunk<
   }
 });
 
+// approveProperty thunk is fine
 export const approveProperty = createAsyncThunk<Property, string>(
   "properties/approve",
   async (id, thunkAPI) => {
@@ -140,6 +160,7 @@ export const approveProperty = createAsyncThunk<Property, string>(
   }
 );
 
+// deleteProperty thunk is fine
 export const deleteProperty = createAsyncThunk<string, string>(
   "properties/delete",
   async (propertyId, thunkAPI) => {
@@ -154,6 +175,7 @@ export const deleteProperty = createAsyncThunk<string, string>(
   }
 );
 
+// createReview thunk is fine
 export const createReview = createAsyncThunk<
   Review,
   { propertyId: string; rating: number; comment: string }
@@ -220,24 +242,25 @@ export const propertySlice = createSlice({
         state.isError = true;
         state.message = action.payload as string;
       })
+
+      // --- UPDATE PROPERTY REDUCERS AB SAHI HAIN ---
       .addCase(updateProperty.pending, (state) => {
         state.isLoading = true;
       })
       .addCase(updateProperty.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        const index = state.properties.findIndex(
-          (p) => p._id === action.payload._id
+        // properties array mein updated property ko replace karein
+        state.properties = state.properties.map((p) =>
+          p._id === action.payload._id ? action.payload : p
         );
-        if (index !== -1) {
-          state.properties[index] = action.payload;
-        }
       })
       .addCase(updateProperty.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload as string;
       })
+
       .addCase(approveProperty.pending, (state) => {
         state.isLoading = true;
       })
