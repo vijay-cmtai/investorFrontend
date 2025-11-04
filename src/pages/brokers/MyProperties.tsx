@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { MoreHorizontal, Loader2 } from "lucide-react";
+import { MoreHorizontal, Loader2, PlusCircle, Search } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   getProperties,
@@ -17,6 +17,7 @@ import {
   CardTitle,
   CardContent,
   CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -26,248 +27,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import EditPropertyModal from "@/components/admin/EditPropertyModal"; // Assuming this is a shared component now
 
-interface EditPropertyModalProps {
-  property: Property | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (id: string, data: any) => void;
-  isLoading: boolean;
-}
-
-const EditPropertyModal: React.FC<EditPropertyModalProps> = ({
-  property,
-  isOpen,
-  onClose,
-  onSave,
-  isLoading,
-}) => {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    price: 0,
-    bedrooms: 0,
-    bathrooms: 0,
-    square_feet: 0,
-    property_type: "",
-    transaction_type: "sale",
-    furnishingStatus: "Unfurnished",
-  });
-  const propertyTypes = [
-    "Apartment",
-    "Villa",
-    "Plot",
-    "Commercial Space",
-    "Office",
-    "Farmhouse",
-    "Builder Floor",
-  ];
-
-  useEffect(() => {
-    if (property) {
-      setFormData({
-        title: property.title || "",
-        description: property.description || "",
-        price: property.price || 0,
-        bedrooms: property.bedrooms || 0,
-        bathrooms: property.bathrooms || 0,
-        square_feet: property.square_feet || 0,
-        property_type: property.property_type || "",
-        transaction_type: property.transaction_type || "sale",
-        furnishingStatus: property.furnishingStatus || "Unfurnished",
-      });
-    }
-  }, [property]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { id, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id]: type === "number" ? Number(value) : value,
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = () => {
-    onSave(property!._id, formData);
-  };
-  if (!property) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Property</DialogTitle>
-          <DialogDescription>
-            Make changes to your property. Click save when you're done.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" value={formData.title} onChange={handleChange} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="square_feet">Square Feet</Label>
-              <Input
-                id="square_feet"
-                type="number"
-                value={formData.square_feet}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="bedrooms">Bedrooms</Label>
-              <Input
-                id="bedrooms"
-                type="number"
-                value={formData.bedrooms}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bathrooms">Bathrooms</Label>
-              <Input
-                id="bathrooms"
-                type="number"
-                value={formData.bathrooms}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label>Property Type</Label>
-              <Select
-                value={formData.property_type}
-                onValueChange={(value) =>
-                  handleSelectChange("property_type", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {propertyTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Transaction Type</Label>
-              <Select
-                value={formData.transaction_type}
-                onValueChange={(value) =>
-                  handleSelectChange("transaction_type", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sale">For Sale</SelectItem>
-                  <SelectItem value="rent">For Rent</SelectItem>
-                  <SelectItem value="lease">For Lease</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Furnishing Status</Label>
-              <Select
-                value={formData.furnishingStatus}
-                onValueChange={(value) =>
-                  handleSelectChange("furnishingStatus", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Furnished">Furnished</SelectItem>
-                  <SelectItem value="Semi-Furnished">Semi-Furnished</SelectItem>
-                  <SelectItem value="Unfurnished">Unfurnished</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
 const MyProperties = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { properties, isLoading, isError, message } = useAppSelector(
-    (state) => state.properties
-  );
+  const { properties, isLoading } = useAppSelector((state) => state.properties);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(
     null
   );
+
   useEffect(() => {
     dispatch(getProperties());
     return () => {
@@ -275,37 +56,30 @@ const MyProperties = () => {
     };
   }, [dispatch]);
 
-  useEffect(() => {
-    if (isError) {
-      toast.error(message as string);
-      dispatch(reset());
-    }
-  }, [isError, message, dispatch]);
+  const filteredProperties = useMemo(() => {
+    if (!searchQuery) return properties;
+    const lowercasedQuery = searchQuery.toLowerCase();
+    return properties.filter((p) =>
+      p.title.toLowerCase().includes(lowercasedQuery)
+    );
+  }, [properties, searchQuery]);
 
-  const handleAddNew = () => {
-    navigate("/broker/properties/add");
-  };
   const handleOpenEditModal = (property: Property) => {
     setSelectedProperty(property);
     setIsModalOpen(true);
   };
-  const handleUpdate = (id: string, propertyData: any) => {
-    dispatch(updateProperty({ id, propertyData }))
-      .unwrap()
-      .then(() => {
-        toast.success("Property updated successfully");
-        setIsModalOpen(false);
-      })
-      .catch((error) => toast.error(error.message || "Failed to update"));
-  };
+
   const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure?")) {
+    if (window.confirm("Are you sure you want to delete this property?")) {
       dispatch(deleteProperty(id))
         .unwrap()
-        .then(() => toast.success("Property deleted successfully"))
-        .catch((error) => toast.error(error.message || "Failed to delete"));
+        .then(() => toast.success("Property deleted."))
+        .catch((error) =>
+          toast.error(error.message || "Failed to delete property.")
+        );
     }
   };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Approved":
@@ -314,111 +88,151 @@ const MyProperties = () => {
         return "bg-yellow-100 text-yellow-800";
       case "Rejected":
         return "bg-red-100 text-red-800";
+      case "Sold":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  if (isLoading && properties.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div>
-            <CardTitle>My Property Listings</CardTitle>
-            <CardDescription>
+            <h1 className="text-3xl font-bold">My Property Listings</h1>
+            <p className="text-muted-foreground">
               Manage your properties available for sale or rent.
-            </CardDescription>
+            </p>
           </div>
-          <Button onClick={handleAddNew}>Add New Property</Button>
-        </CardHeader>
-        <CardContent>
-          {properties.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-muted-foreground">
-                You have not added any properties yet.
-              </p>
-              <Button onClick={handleAddNew} className="mt-4">
-                Add Your First Property
-              </Button>
+          <Button onClick={() => navigate("/broker/add-property")}>
+            <PlusCircle className="w-4 h-4 mr-2" /> Add New Property
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Your Properties</CardTitle>
+                <CardDescription>
+                  All properties listed under your account.
+                </CardDescription>
+              </div>
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by title..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Property Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {properties.map((prop: Property) => (
-                  <TableRow key={prop._id}>
-                    <TableCell className="font-medium">{prop.title}</TableCell>
-                    <TableCell>{prop.property_type}</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("en-IN", {
-                        style: "currency",
-                        currency: "INR",
-                        maximumFractionDigits: 0,
-                      }).format(prop.price)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={getStatusBadge(prop.status)}
-                      >
-                        {prop.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onSelect={() => handleOpenEditModal(prop)}
-                          >
-                            Edit Property
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onSelect={() => handleDelete(prop._id)}
-                          >
-                            Delete Property
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+          </CardHeader>
+          <CardContent>
+            {isLoading && properties.length === 0 ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : filteredProperties.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">
+                  You have not added any properties yet.
+                </p>
+                <Button
+                  onClick={() => navigate("/broker/add-property")}
+                  className="mt-4"
+                >
+                  Add Your First Property
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Property Title</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredProperties.map((prop) => (
+                    <TableRow key={prop._id}>
+                      <TableCell className="font-medium">
+                        {prop.title}
+                      </TableCell>
+                      <TableCell>{prop.property_type}</TableCell>
+                      <TableCell>
+                        {new Intl.NumberFormat("en-IN", {
+                          style: "currency",
+                          currency: "INR",
+                          maximumFractionDigits: 0,
+                        }).format(prop.price)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={getStatusBadge(prop.status)}
+                        >
+                          {prop.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onSelect={() => navigate(`/property/${prop._id}`)}
+                            >
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => handleOpenEditModal(prop)}
+                            >
+                              Edit Property
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onSelect={() => handleDelete(prop._id)}
+                            >
+                              Delete Property
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+          <CardFooter>
+            <div className="text-xs text-muted-foreground">
+              Showing <strong>{filteredProperties.length}</strong> of{" "}
+              <strong>{properties.length}</strong> properties.
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+
       {selectedProperty && (
         <EditPropertyModal
           property={selectedProperty}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSave={handleUpdate}
-          isLoading={isLoading}
         />
       )}
     </>

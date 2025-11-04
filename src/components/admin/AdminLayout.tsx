@@ -68,20 +68,16 @@ const sidebarNavItems = [
   { title: "Reports", href: "/admin/reports", icon: FileBarChart },
   { title: "Roles & Access", href: "/admin/roles", icon: ShieldCheck },
 ];
-
 const AdminLayout = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
   const closeSheet = () => setIsSheetOpen(false);
-
   const handleLogout = () => {
     dispatch(logout());
     toast.success("Logged out successfully.");
     navigate("/auth");
   };
-
   return (
     <div className="grid h-screen w-full overflow-hidden md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
       <aside className="hidden border-r bg-muted/40 md:block">
@@ -209,5 +205,4 @@ const AdminLayout = () => {
     </div>
   );
 };
-
 export default AdminLayout;

@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  NavLink,
+  useNavigate,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import {
   LayoutDashboard,
   Building,
@@ -13,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAppDispatch } from "@/redux/hooks";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks";
 import { logout } from "@/redux/features/auth/authSlice";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,17 +32,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Aapke file structure ke hisab se sahi imports
+import BrokerDashboard from "@/pages/brokers/Dashboard";
+import MyProperties from "@/pages/brokers/MyProperties";
+import AddPropertyBroker from "@/pages/brokers/AddPropertyBroker";
+import Enquiries from "@/pages/brokers/Enquiries";
+import BrokerProfile from "@/pages/brokers/Profile";
+
 const sidebarNavItems = [
   { title: "Dashboard", href: "/broker/dashboard", icon: LayoutDashboard },
   { title: "My Properties", href: "/broker/properties", icon: Building },
-  { title: "Add Property", href: "/broker/properties/add", icon: PlusCircle },
+  { title: "Add Property", href: "/broker/add-property", icon: PlusCircle },
   { title: "Enquiries", href: "/broker/enquiries", icon: Mail },
+  { title: "Profile", href: "/broker/profile", icon: User },
 ];
 
 const BrokerLayout = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { user } = useAppSelector((state) => state.auth);
 
   const closeSheet = () => setIsSheetOpen(false);
 
@@ -48,7 +63,6 @@ const BrokerLayout = () => {
 
   return (
     <div className="grid h-screen w-full overflow-hidden md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
-      {/* --- Sidebar for Desktop --- */}
       <aside className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -66,7 +80,7 @@ const BrokerLayout = () => {
                 <NavLink
                   key={item.href}
                   to={item.href}
-                  end
+                  end={item.href.endsWith("/dashboard")}
                   className={({ isActive }) =>
                     cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
@@ -84,9 +98,7 @@ const BrokerLayout = () => {
       </aside>
 
       <div className="flex flex-col overflow-auto">
-        {/* --- Header for Mobile and Desktop --- */}
         <header className="flex h-14 items-center gap-4 border-b bg-background px-4 sticky top-0 z-20 lg:h-[60px] lg:px-6">
-          {/* Mobile Sidebar Trigger */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button
@@ -111,7 +123,7 @@ const BrokerLayout = () => {
                   <NavLink
                     key={item.href}
                     to={item.href}
-                    end
+                    end={item.href.endsWith("/dashboard")}
                     onClick={closeSheet}
                     className={({ isActive }) =>
                       cn(
@@ -129,12 +141,17 @@ const BrokerLayout = () => {
           </Sheet>
 
           <div className="w-full flex-1"></div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar>
-                  <AvatarImage src="https://avatar.iran.liara.run/public/boy" />
-                  <AvatarFallback>BR</AvatarFallback>
+                  <AvatarImage
+                    src={`https://avatar.iran.liara.run/public/boy?username=${user?.email || "broker"}`}
+                  />
+                  <AvatarFallback>
+                    {user?.name?.charAt(0).toUpperCase() || "B"}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>
               </Button>
@@ -146,7 +163,7 @@ const BrokerLayout = () => {
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/broker/settings")}>
+              <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -158,12 +175,19 @@ const BrokerLayout = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+
         <main className="flex-1 p-4 lg:p-6 bg-muted/40">
-          <Outlet />
+          <Routes>
+            <Route path="/" element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<BrokerDashboard />} />
+            <Route path="properties" element={<MyProperties />} />
+            <Route path="add-property" element={<AddPropertyBroker />} />
+            <Route path="enquiries" element={<Enquiries />} />
+            <Route path="profile" element={<BrokerProfile />} />
+          </Routes>
         </main>
       </div>
     </div>
   );
 };
-
 export default BrokerLayout;

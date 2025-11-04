@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -73,20 +73,28 @@ const ContactUs = () => {
     dispatch(submitContactForm(data));
   };
 
+  const bannerImageUrl =
+    "https://www.shutterstock.com/image-photo/using-laptop-show-icon-address-600nw-2521386695.jpg";
+
   return (
     <div className="min-h-screen bg-white">
-      <section className="py-20 text-center bg-gray-50">
-        <div className="container mx-auto px-4 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-            Get In Touch
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+      {/* === HERO SECTION WITH BACKGROUND IMAGE === */}
+      <section
+        className="relative py-24 text-center bg-cover bg-center"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('${bannerImageUrl}')`,
+        }}
+      >
+        <div className="container mx-auto px-4 animate-fade-in text-white">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Get In Touch</h1>
+          <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-90">
             Have a question or a property in mind? Our expert advisors are ready
             to assist you on your real estate journey.
           </p>
         </div>
       </section>
 
+      {/* Contact Form and Info Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-5 gap-12">
