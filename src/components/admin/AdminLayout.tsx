@@ -41,7 +41,7 @@ import {
 
 // Apne sabhi admin pages ko yahan import karein
 import AdminDashboard from "@/pages/admin/dashboard";
-import AddPropertyAdmin from "@/pages/admin/AddpropertyByAdmin";
+import AddPropertyAdmin from "@/pages/admin/AddPropertyByAdmin";
 import ManageProperties from "@/pages/admin/ManageProperties";
 import ManageOrders from "@/pages/admin/ManageOrders";
 import ManageLeads from "@/pages/admin/ManageLeads";
