@@ -60,7 +60,7 @@ const sidebarNavItems = [
   { title: "Properties", href: "/admin/properties", icon: Building2 },
   { title: "Orders & Deals", href: "/admin/orders", icon: ShoppingCart },
   { title: "Blog Post", href: "/admin/blog-post", icon: Building2 },
-  {title: "Manage Blogs", href: "/admin/manage-blogs", icon: Building2 },
+  { title: "Manage Blogs", href: "/admin/manage-blogs", icon: Building2 },
   { title: "Leads", href: "/admin/leads", icon: Target },
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "MLM System", href: "/admin/mlm-system", icon: Network },

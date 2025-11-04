@@ -41,7 +41,6 @@ import Autoplay from "embla-carousel-autoplay";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// Ek behtar Skeleton Loader
 const PropertyCardSkeleton: FC = () => (
   <Card className="overflow-hidden animate-pulse">
     <div className="h-52 bg-muted"></div>
@@ -57,12 +56,6 @@ const PropertyCardSkeleton: FC = () => (
   </Card>
 );
 
-const mockProperties: Partial<Property>[] = [
-  { _id: "mock1" },
-  { _id: "mock2" },
-  { _id: "mock3" },
-];
-
 const Index: FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -77,7 +70,7 @@ const Index: FC = () => {
   );
 
   useEffect(() => {
-    dispatch(getProperties({ limit: 6 }));
+    dispatch(getProperties({ isFeatured: true, limit: 6 }));
     if (user) {
       dispatch(getWishlist());
     }
@@ -137,7 +130,6 @@ const Index: FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* ========== Hero Section ========== */}
       <section
         className="relative text-white pt-32 pb-20 min-h-[80vh] md:min-h-[700px] flex items-center"
         style={{
@@ -190,7 +182,6 @@ const Index: FC = () => {
         </div>
       </section>
 
-      {/* ========== Latest Properties Section ========== */}
       <section className="py-20 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -201,43 +192,23 @@ const Index: FC = () => {
               Hand-picked premium properties from our exclusive collection.
             </p>
           </div>
-          {isLoading && properties.length === 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {mockProperties.map((prop) => (
-                <PropertyCardSkeleton key={prop._id} />
-              ))}
-            </div>
-          ) : (
-            <Carousel
-              opts={{ align: "start", loop: properties.length > 3 }}
-              plugins={[plugin.current]}
-              className="w-full"
-              onMouseEnter={plugin.current.stop}
-              onMouseLeave={plugin.current.reset}
-            >
-              <CarouselContent className="-ml-4">
-                {properties.map((property) => (
-                  <CarouselItem
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {isLoading && properties.length === 0
+              ? [...Array(6)].map((_, i) => <PropertyCardSkeleton key={i} />)
+              : properties.map((property) => (
+                  <div
                     key={property._id}
-                    className="pl-4 md:basis-1/2 lg:basis-1/3"
+                    onClick={() => handlePropertyClick(property._id)}
+                    className="cursor-pointer"
                   >
-                    <div
-                      className="p-1 h-full"
-                      onClick={() => handlePropertyClick(property._id)}
-                    >
-                      <PropertyCard
-                        property={property}
-                        isWishlisted={wishlistedIds.includes(property._id)}
-                        onToggleWishlist={handleToggleWishlist}
-                      />
-                    </div>
-                  </CarouselItem>
+                    <PropertyCard
+                      property={property}
+                      isWishlisted={wishlistedIds.includes(property._id)}
+                      onToggleWishlist={handleToggleWishlist}
+                    />
+                  </div>
                 ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden sm:flex" />
-              <CarouselNext className="hidden sm:flex" />
-            </Carousel>
-          )}
+          </div>
           <div className="text-center mt-12">
             <Button
               size="lg"
@@ -251,7 +222,6 @@ const Index: FC = () => {
         </div>
       </section>
 
-      {/* ========== Explore Top Cities Section ========== */}
       <section className="py-20 sm:py-24 bg-muted/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -302,7 +272,6 @@ const Index: FC = () => {
         </div>
       </section>
 
-      {/* ========== Explore by Property Type Section (Spacing Adjusted) ========== */}
       <section className="pt-16 sm:pt-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -335,7 +304,6 @@ const Index: FC = () => {
         </div>
       </section>
 
-      {/* ========== Why Choose Us Section (Spacing Adjusted) ========== */}
       <section className="pt-16 sm:pt-20 bg-muted/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -383,7 +351,6 @@ const Index: FC = () => {
         </div>
       </section>
 
-      {/* ========== Testimonials Section (New UI & Spacing Adjusted) ========== */}
       <section className="pt-16 sm:pt-20 pb-20 sm:pb-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -414,9 +381,7 @@ const Index: FC = () => {
                         <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/20">
                           <Avatar className="w-12 h-12">
                             <AvatarImage
-                              src={`https://avatar.iran.liara.run/public?username=${t.name
-                                .split("&")[0]
-                                .trim()}`}
+                              src={`https://avatar.iran.liara.run/public?username=${t.name.split("&")[0].trim()}`}
                             />
                             <AvatarFallback>{t.name.charAt(0)}</AvatarFallback>
                           </Avatar>
@@ -441,7 +406,6 @@ const Index: FC = () => {
         </div>
       </section>
 
-      {/* ========== Final CTA Section ========== */}
       <section className="pb-10 pt-10">
         <div className="container mx-auto px-4">
           <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-10 md:p-16 text-center text-white relative overflow-hidden">
