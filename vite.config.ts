@@ -4,7 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "./", // ✅ relative path important for Vercel
+  base: "./", // ✅ relative paths for deployment (important for Vercel)
   server: {
     host: "::",
     port: 8080,
@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist",
     rollupOptions: {
-      // ✅ use absolute path so Rollup can find it properly
+      // ✅ use absolute path so Rollup can find index.html properly
       input: path.resolve(__dirname, "index.html"),
     },
   },
