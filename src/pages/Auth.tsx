@@ -203,7 +203,6 @@ const Auth = () => {
                   <TabsTrigger value="Customer">Customer</TabsTrigger>
                   <TabsTrigger value="Associate">Associate</TabsTrigger>
                   <TabsTrigger value="Company">Company</TabsTrigger>
-                  <TabsTrigger value="Admin">Admin</TabsTrigger>
                 </TabsList>
                 <form
                   onSubmit={handleRegisterSubmit}
