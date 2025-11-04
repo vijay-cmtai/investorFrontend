@@ -11,6 +11,9 @@ import { store } from "./redux/store";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RoleBasedRoute from "./components/auth/RoleBasedRoute";
 
+// --- YEH NAYA COMPONENT IMPORT KAREIN ---
+import HotDealsPopup from "./components/HotDealsPopup";
+
 // Layouts
 import PublicLayout from "./layouts/PublicLayout";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -21,6 +24,7 @@ import ServicesLayout from "./pages/ServicesLayout";
 import ScrollToTop from "./components/ScrollToTop";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import HotDeals from "./pages/HotDeals";
 
 // Public Pages
 import Index from "./pages/Index";
@@ -59,6 +63,10 @@ const App: FC = () => (
       <Provider store={store}>
         <BrowserRouter>
           <ScrollToTop />
+
+          {/* === YAHAN PAR NAYA COMPONENT ADD KAREIN === */}
+          <HotDealsPopup />
+
           <Routes>
             {/* --- 1. Public Routes (Inhe koi bhi access kar sakta hai) --- */}
             <Route element={<PublicLayout />}>
@@ -76,7 +84,7 @@ const App: FC = () => (
               <Route path="/careers" element={<Careers />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
-
+              <Route path="/hot-deals" element={<HotDeals />} />
               <Route
                 path="/investor-relations"
                 element={<InvestorRelations />}
@@ -93,29 +101,21 @@ const App: FC = () => (
               </Route>
             </Route>
 
-            {/* --- 2. Auth Routes (Login, Register, etc.) --- */}
+            {/* Baaki saare routes waise hi rahenge... */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-            {/* --- 3. Protected Routes (Inke liye Login Zaroori Hai) --- */}
             <Route element={<ProtectedRoute />}>
-              {/* ADMIN PANEL */}
               <Route element={<RoleBasedRoute allowedRoles={["Admin"]} />}>
                 <Route path="/admin/*" element={<AdminLayout />} />
               </Route>
-
-              {/* COMPANY PANEL */}
               <Route element={<RoleBasedRoute allowedRoles={["Company"]} />}>
                 <Route path="/company/*" element={<CompanyLayout />} />
               </Route>
-
-              {/* ASSOCIATE/BROKER PANEL */}
               <Route element={<RoleBasedRoute allowedRoles={["Associate"]} />}>
                 <Route path="/broker/*" element={<BrokerLayout />} />
               </Route>
-
-              {/* CUSTOMER/USER PANEL */}
               <Route element={<RoleBasedRoute allowedRoles={["Customer"]} />}>
                 <Route path="/users/*" element={<UserLayout />} />
               </Route>

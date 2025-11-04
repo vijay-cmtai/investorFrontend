@@ -1,10 +1,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import API from "../../../api/axios";
 
-// Form se aane wale data ka type
+// Form se aane wale naye data ka type
 interface ContactFormData {
   name: string;
   email: string;
+  phone: string;
+  city: string;
+  inquiryType: string;
+  budget: string;
   message: string;
 }
 
@@ -28,6 +32,7 @@ export const submitContactForm = createAsyncThunk<string, ContactFormData>(
   "contact/submit",
   async (formData, thunkAPI) => {
     try {
+      // Endpoint ko aam taur par /contact rakhte hain
       const response = await API.post("/contact/submit", formData);
       return response.data.message; // Success message return karein
     } catch (error: any) {

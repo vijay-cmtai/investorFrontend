@@ -24,12 +24,14 @@ const Header = () => {
   }, [user, dispatch]);
 
   const navItems = [
+    { label: "About Us", href: "/about-us" },
     { label: "Buy", href: "/buy" },
     { label: "Rent", href: "/rent" },
     { label: "Commercial", href: "/commercial" },
     { label: "New Projects", href: "/new-projects" },
     { label: "Property Services", href: "/property-services" },
     { label: "Blog", href: "/blog" },
+    { label: "Hot Deals", href: "/hot-deals" },
   ];
 
   const handleSignOut = () => {

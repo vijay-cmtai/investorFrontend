@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { CSVLink } from "react-csv";
 import {
   MoreHorizontal,
   Loader2,
   PlusCircle,
   File,
   Search,
+  Flame,
+  Star,
+  CheckCircle,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
@@ -16,6 +18,9 @@ import {
   approveProperty,
   reset,
   Property,
+  toggleHotDeal,
+  toggleFeatured,
+  toggleVerified,
 } from "@/redux/features/properties/propertySlice";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,8 +50,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import EditPropertyModal from "@/components/admin/EditPropertyModal"; // Naya modal import karein
+import EditPropertyModal from "@/components/admin/EditPropertyModal";
 
 const ManageProperties = () => {
   const navigate = useNavigate();
@@ -73,23 +77,12 @@ const ManageProperties = () => {
     }
     if (searchQuery) {
       const lowercasedQuery = searchQuery.toLowerCase();
-      props = props.filter(
-        (p) =>
-          p.title.toLowerCase().includes(lowercasedQuery) ||
-          p.user?.name?.toLowerCase().includes(lowercasedQuery)
+      props = props.filter((p) =>
+        p.title.toLowerCase().includes(lowercasedQuery)
       );
     }
     return props;
   }, [properties, activeTab, searchQuery]);
-
-  const csvData = filteredProperties.map((prop) => ({
-    _id: prop._id,
-    title: prop.title,
-    price: prop.price,
-    status: prop.status,
-    uploadedBy: prop.user?.name || "N/A",
-    city: prop.location?.city || "N/A",
-  }));
 
   const handleOpenEditModal = (property: Property) => {
     setSelectedProperty(property);
@@ -97,11 +90,13 @@ const ManageProperties = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure?")) {
+    if (window.confirm("Are you sure you want to delete this property?")) {
       dispatch(deleteProperty(id))
         .unwrap()
         .then(() => toast.success("Property deleted."))
-        .catch((error) => toast.error(error || "Failed to delete property."));
+        .catch((error) =>
+          toast.error(error.message || "Failed to delete property.")
+        );
     }
   };
 
@@ -109,7 +104,42 @@ const ManageProperties = () => {
     dispatch(approveProperty(id))
       .unwrap()
       .then(() => toast.success("Property approved."))
-      .catch((error) => toast.error(error || "Failed to approve property."));
+      .catch((error) =>
+        toast.error(error.message || "Failed to approve property.")
+      );
+  };
+
+  const handleToggleHotDeal = (id: string) => {
+    dispatch(toggleHotDeal(id))
+      .unwrap()
+      .then((p) =>
+        toast.success(
+          `Property marked as ${p.isHotDeal ? "Hot Deal" : "Normal"}.`
+        )
+      )
+      .catch((e) => toast.error(e.message));
+  };
+
+  const handleToggleFeatured = (id: string) => {
+    dispatch(toggleFeatured(id))
+      .unwrap()
+      .then((p) =>
+        toast.success(
+          `Property marked as ${p.isFeatured ? "Featured" : "Not Featured"}.`
+        )
+      )
+      .catch((e) => toast.error(e.message));
+  };
+
+  const handleToggleVerified = (id: string) => {
+    dispatch(toggleVerified(id))
+      .unwrap()
+      .then((p) =>
+        toast.success(
+          `Property marked as ${p.isVerified ? "Verified" : "Not Verified"}.`
+        )
+      )
+      .catch((e) => toast.error(e.message));
   };
 
   const getStatusBadge = (status: string) => {
@@ -139,18 +169,12 @@ const ManageProperties = () => {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search properties..."
+                placeholder="Search by title..."
                 className="pl-8 sm:w-[300px]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <CSVLink data={csvData} filename={`properties_${activeTab}.csv`}>
-              <Button size="sm" variant="outline" className="h-9 gap-1">
-                <File className="h-3.5 w-3.5" />
-                <span>Export</span>
-              </Button>
-            </CSVLink>
             <Button
               size="sm"
               className="h-9 gap-1"
@@ -165,25 +189,19 @@ const ManageProperties = () => {
           <CardHeader>
             <CardTitle>Properties</CardTitle>
             <CardDescription>
-              Manage your properties and view their sales performance.
+              Manage your properties and their status.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="hidden w-[80px] sm:table-cell">
-                    <span className="sr-only">Image</span>
-                  </TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Price</TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    Uploaded By
-                  </TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
+                  <TableHead>Deal</TableHead>
+                  <TableHead>Featured</TableHead>
+                  <TableHead>Verified</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -196,15 +214,6 @@ const ManageProperties = () => {
                 ) : filteredProperties.length > 0 ? (
                   filteredProperties.map((prop) => (
                     <TableRow key={prop._id}>
-                      <TableCell className="hidden sm:table-cell">
-                        <img
-                          alt="Property"
-                          className="aspect-square rounded-md object-cover"
-                          height="64"
-                          src={prop.images?.[0] || "/placeholder.svg"}
-                          width="64"
-                        />
-                      </TableCell>
                       <TableCell className="font-medium">
                         {prop.title}
                       </TableCell>
@@ -216,25 +225,35 @@ const ManageProperties = () => {
                           {prop.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {new Intl.NumberFormat("en-IN", {
-                          style: "currency",
-                          currency: "INR",
-                          maximumFractionDigits: 0,
-                        }).format(prop.price)}
+                      <TableCell>
+                        {prop.isHotDeal ? (
+                          <Badge className="border-orange-500/50 bg-orange-500/10 text-orange-700">
+                            <Flame className="w-3 h-3 mr-1" />
+                            Hot
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage
-                              src={`https://avatar.iran.liara.run/public/boy?username=${prop.user?.email}`}
-                            />
-                            <AvatarFallback>
-                              {prop.user?.name?.charAt(0) || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{prop.user?.name || "N/A"}</span>
-                        </div>
+                      <TableCell>
+                        {prop.isFeatured ? (
+                          <Badge className="border-blue-500/50 bg-blue-500/10 text-blue-700">
+                            <Star className="w-3 h-3 mr-1" />
+                            Yes
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">No</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {prop.isVerified ? (
+                          <Badge className="border-indigo-500/50 bg-indigo-500/10 text-indigo-700">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Yes
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">No</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -252,14 +271,36 @@ const ManageProperties = () => {
                                 Approve
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onSelect={() => handleToggleHotDeal(prop._id)}
+                            >
+                              {prop.isHotDeal
+                                ? "Remove Hot Deal"
+                                : "Mark as Hot Deal"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => handleToggleFeatured(prop._id)}
+                            >
+                              {prop.isFeatured
+                                ? "Remove Featured"
+                                : "Mark as Featured"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => handleToggleVerified(prop._id)}
+                            >
+                              {prop.isVerified
+                                ? "Un-verify"
+                                : "Mark as Verified"}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleOpenEditModal(prop)}
                             >
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="text-red-500"
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50"
                               onSelect={() => handleDelete(prop._id)}
                             >
                               Delete
