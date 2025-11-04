@@ -96,6 +96,7 @@ export const deleteUser = createAsyncThunk<string, string>(
   }
 );
 
+// <<< --- YAHAN 'EXPORT' ADD KAR DIYA GAYA HAI --- >>>
 export const updateProfile = createAsyncThunk(
   "user/updateProfile",
   async (userData: FormData, thunkAPI) => {
@@ -112,6 +113,7 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
+// <<< --- YAHAN BHI 'EXPORT' ADD KAR DIYA GAYA HAI --- >>>
 export const changePassword = createAsyncThunk(
   "user/changePassword",
   async (passwordData: any, thunkAPI) => {
@@ -142,6 +144,7 @@ export const userSlice = createSlice({
       .addCase(
         getAllUsers.fulfilled,
         (state, action: PayloadAction<User[]>) => {
+          state.isLoading = false;
           state.isSuccess = true;
           state.users = action.payload;
         }
@@ -149,21 +152,25 @@ export const userSlice = createSlice({
       .addCase(
         getAssociates.fulfilled,
         (state, action: PayloadAction<User[]>) => {
+          state.isLoading = false;
           state.isSuccess = true;
           state.users = action.payload;
         }
       )
       .addCase(createUser.fulfilled, (state, action: PayloadAction<User>) => {
+        state.isLoading = false;
         state.isSuccess = true;
         state.users.unshift(action.payload);
       })
       .addCase(updateUser.fulfilled, (state, action: PayloadAction<User>) => {
+        state.isLoading = false;
         state.isSuccess = true;
         state.users = state.users.map((user) =>
           user._id === action.payload._id ? action.payload : user
         );
       })
       .addCase(deleteUser.fulfilled, (state, action: PayloadAction<string>) => {
+        state.isLoading = false;
         state.isSuccess = true;
         state.users = state.users.filter((user) => user._id !== action.payload);
       })
@@ -173,6 +180,7 @@ export const userSlice = createSlice({
         state.message = "Profile updated successfully!";
       })
       .addCase(changePassword.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.isSuccess = true;
         state.message = action.payload;
       })
@@ -194,6 +202,5 @@ export const userSlice = createSlice({
       );
   },
 });
-
 export const { reset } = userSlice.actions;
 export default userSlice.reducer;

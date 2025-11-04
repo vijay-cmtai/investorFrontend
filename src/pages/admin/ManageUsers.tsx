@@ -1,12 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { toast } from "sonner";
 import { MoreHorizontal, Loader2, PlusCircle, File } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import {
-  getAllUsers,
-  deleteUser,
-  updateUser,
-} from "@/redux/features/users/userSlice";
+import { getAllUsers, deleteUser } from "@/redux/features/users/userSlice";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,49 +34,62 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const ManageUsers = () => {
   const dispatch = useAppDispatch();
-  const { users, isLoading } = useAppSelector((state) => state.users);
+  // Ensure users is always an array, even if it's undefined from the selector initially
+  const { users = [], isLoading } = useAppSelector((state) => state.users);
 
   useEffect(() => {
     dispatch(getAllUsers());
   }, [dispatch]);
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure?")) {
+    if (window.confirm("Are you sure you want to delete this user?")) {
       dispatch(deleteUser(id))
         .unwrap()
-        .then(() => toast.success("User deleted."));
+        .then(() => toast.success("User deleted successfully."))
+        .catch((err) => toast.error(`Failed to delete user: ${err.message}`));
     }
   };
 
-  const getRoleBadge = (role) => {
-    const roles = {
-      Admin: "bg-red-100 text-red-800",
-      Associate: "bg-blue-100 text-blue-800",
-      Company: "bg-purple-100 text-purple-800",
-      Customer: "bg-gray-100 text-gray-800",
+  const getRoleBadge = (role: string) => {
+    const roles: { [key: string]: string } = {
+      Admin: "border-red-500/50 bg-red-500/10 text-red-700",
+      Associate: "border-blue-500/50 bg-blue-500/10 text-blue-700",
+      Company: "border-purple-500/50 bg-purple-500/10 text-purple-700",
+      Customer: "border-gray-500/50 bg-gray-500/10 text-gray-700",
     };
     return roles[role] || roles.Customer;
   };
 
-  const renderTable = (filteredUsers) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>User</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead className="hidden md:table-cell">Joined On</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {isLoading ? (
+  // A single render function for all tabs to avoid code repetition
+  const renderUserTable = (userList: typeof users) => {
+    if (isLoading && userList.length === 0) {
+      return (
+        <div className="flex justify-center items-center h-48">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
+    if (userList.length === 0) {
+      return (
+        <div className="text-center p-8 text-muted-foreground">
+          No users found for this category.
+        </div>
+      );
+    }
+
+    return (
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={4} className="h-24 text-center">
-              <Loader2 className="mx-auto h-8 w-8 animate-spin" />
-            </TableCell>
+            <TableHead>User</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead className="hidden md:table-cell">Joined On</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
-        ) : (
-          filteredUsers.map((user) => (
+        </TableHeader>
+        <TableBody>
+          {userList.map((user) => (
             <TableRow key={user._id}>
               <TableCell>
                 <div className="flex items-center gap-3">
@@ -90,16 +99,13 @@ const ManageUsers = () => {
                       alt="Avatar"
                     />
                     <AvatarFallback>
-                      {/* --- FIX #1: Check if user.name exists before using charAt --- */}
                       {user.name ? user.name.charAt(0).toUpperCase() : "?"}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    {/* --- FIX #2: Provide a fallback for the name --- */}
                     <div className="font-medium">
                       {user.name || "Unnamed User"}
                     </div>
-                    {/* --- FIX #3: Provide a fallback for the email --- */}
                     <div className="text-sm text-muted-foreground">
                       {user.email || "No Email"}
                     </div>
@@ -107,12 +113,9 @@ const ManageUsers = () => {
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className={getRoleBadge(user.role)}>
-                  {user.role}
-                </Badge>
+                <Badge className={getRoleBadge(user.role)}>{user.role}</Badge>
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                {/* --- FIX #4: Provide a fallback for the date --- */}
                 {user.createdAt
                   ? new Date(user.createdAt).toLocaleDateString()
                   : "N/A"}
@@ -129,7 +132,7 @@ const ManageUsers = () => {
                     <DropdownMenuItem>Edit User</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="text-red-500"
+                      className="text-red-600 focus:bg-red-50 focus:text-red-600"
                       onSelect={() => handleDelete(user._id)}
                     >
                       Delete
@@ -138,60 +141,61 @@ const ManageUsers = () => {
                 </DropdownMenu>
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
-  );
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
 
   return (
-    <Tabs defaultValue="all">
-      <div className="flex items-center">
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="customer">Customers</TabsTrigger>
-          <TabsTrigger value="associate">Associates</TabsTrigger>
-          <TabsTrigger value="company">Companies</TabsTrigger>
-        </TabsList>
-        <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-7 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span>Export</span>
-          </Button>
-          <Button size="sm" className="h-7 gap-1">
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span>Add User</span>
-          </Button>
-        </div>
-      </div>
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
-          <CardDescription>
-            Manage all users of your platform, including customers, associates,
-            and companies.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <TabsContent value="all">{renderTable(users)}</TabsContent>
-          <TabsContent value="customer">
-            {renderTable(users.filter((u) => u.role === "Customer"))}
-          </TabsContent>
-          <TabsContent value="associate">
-            {renderTable(users.filter((u) => u.role === "Associate"))}
-          </TabsContent>
-          <TabsContent value="company">
-            {renderTable(users.filter((u) => u.role === "Company"))}
-          </TabsContent>
-        </CardContent>
-        <CardFooter>
-          <div className="text-xs text-muted-foreground">
-            Showing <strong>1-{users.length}</strong> of{" "}
-            <strong>{users.length}</strong> users
+    <div className="p-4 md:p-6 space-y-4">
+      <Tabs defaultValue="all">
+        <div className="flex items-center">
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="customer">Customers</TabsTrigger>
+            <TabsTrigger value="associate">Associates</TabsTrigger>
+            <TabsTrigger value="company">Companies</TabsTrigger>
+          </TabsList>
+          <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" variant="outline" className="h-8 gap-1">
+              <File className="h-3.5 w-3.5" />
+              <span>Export</span>
+            </Button>
+            <Button size="sm" className="h-8 gap-1">
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span>Add User</span>
+            </Button>
           </div>
-        </CardFooter>
-      </Card>
-    </Tabs>
+        </div>
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle>Manage Users</CardTitle>
+            <CardDescription>
+              View and manage all users on the platform.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <TabsContent value="all">{renderUserTable(users)}</TabsContent>
+            <TabsContent value="customer">
+              {renderUserTable(users.filter((u) => u.role === "Customer"))}
+            </TabsContent>
+            <TabsContent value="associate">
+              {renderUserTable(users.filter((u) => u.role === "Associate"))}
+            </TabsContent>
+            <TabsContent value="company">
+              {renderUserTable(users.filter((u) => u.role === "Company"))}
+            </TabsContent>
+          </CardContent>
+          <CardFooter className="border-t pt-4">
+            <div className="text-xs text-muted-foreground">
+              Showing <strong>{users.length}</strong> of{" "}
+              <strong>{users.length}</strong> users.
+            </div>
+          </CardFooter>
+        </Card>
+      </Tabs>
+    </div>
   );
 };
 

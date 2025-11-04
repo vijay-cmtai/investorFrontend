@@ -19,6 +19,8 @@ import BrokerLayout from "./components/broker/BrokerLayout";
 import CompanyLayout from "./components/company/CompanyLayout";
 import ServicesLayout from "./pages/ServicesLayout";
 import ScrollToTop from "./components/ScrollToTop";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 // Public Pages
 import Index from "./pages/Index";
@@ -72,6 +74,9 @@ const App: FC = () => (
               <Route path="/contact-us" element={<ContactUs />} />
               <Route path="/press" element={<Press />} />
               <Route path="/careers" element={<Careers />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+
               <Route
                 path="/investor-relations"
                 element={<InvestorRelations />}

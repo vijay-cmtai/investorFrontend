@@ -1,10 +1,8 @@
-// File: /src/redux/features/dashboard/dashboardSlice.ts
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../../../api/axios"; 
 import { RootState } from "@/redux/store";
 
-const API_URL = "/api/dashboard";
+// Interfaces
 interface DashboardStats {
   totalProperties?: number;
   totalSalesMonth?: number;
@@ -27,14 +25,12 @@ interface Property {
   location: { city: string };
   price: number;
   status: string;
-  [key: string]: any;
 }
 
 interface Lead {
   _id: string;
   customerName: string;
   property?: { title: string };
-  [key: string]: any;
 }
 
 interface DashboardState {
@@ -54,90 +50,36 @@ const initialState: DashboardState = {
   isLoading: false,
   error: null,
 };
-const getToken = (getState: () => RootState) => {
-  const {
-    user: { userInfo },
-  } = getState();
-  return userInfo?.token;
-};
 
-export const getCompanyDashboardStats = createAsyncThunk<
-  DashboardStats,
-  void,
-  { state: RootState }
->("dashboard/getCompanyStats", async (_, { getState, rejectWithValue }) => {
-  try {
-    const token = getToken(getState);
-    const { data } = await axios.get(`${API_URL}/company/stats`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-  } catch (error: any) {
-    return rejectWithValue(error.response.data.message);
+// Async Thunks
+export const getAdminDashboardStats = createAsyncThunk(
+  "dashboard/getAdminStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await API.get("/dashboard/admin/stats");
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch stats"
+      );
+    }
   }
-});
+);
 
-export const getAdminDashboardStats = createAsyncThunk<
-  DashboardStats,
-  void,
-  { state: RootState }
->("dashboard/getAdminStats", async (_, { getState, rejectWithValue }) => {
-  try {
-    const token = getToken(getState);
-    const { data } = await axios.get(`${API_URL}/admin/stats`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-  } catch (error: any) {
-    return rejectWithValue(error.response.data.message);
+export const getCompanyDashboardStats = createAsyncThunk(
+  "dashboard/getCompanyStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await API.get("/dashboard/company/stats");
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch stats"
+      );
+    }
   }
-});
-
-export const getRecentProperties = createAsyncThunk<
-  Property[],
-  void,
-  { state: RootState }
->("dashboard/getRecentProperties", async (_, { getState, rejectWithValue }) => {
-  try {
-    const token = getToken(getState);
-    const {
-      user: { userInfo },
-    } = getState();
-    const url =
-      userInfo?.role === "admin"
-        ? `${API_URL}/admin/recent-properties`
-        : `${API_URL}/company/recent-properties`;
-    const { data } = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-  } catch (error: any) {
-    return rejectWithValue(error.response.data.message);
-  }
-});
-
-export const getRecentLeads = createAsyncThunk<
-  Lead[],
-  void,
-  { state: RootState }
->("dashboard/getRecentLeads", async (_, { getState, rejectWithValue }) => {
-  try {
-    const token = getToken(getState);
-    const {
-      user: { userInfo },
-    } = getState();
-    const url =
-      userInfo?.role === "admin"
-        ? `${API_URL}/admin/recent-leads`
-        : `${API_URL}/company/recent-leads`;
-    const { data } = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-  } catch (error: any) {
-    return rejectWithValue(error.response.data.message);
-  }
-});
+);
+// ... baaki thunks waise hi rehne dein, agar zaroorat ho toh.
 
 const dashboardSlice = createSlice({
   name: "dashboard",
@@ -145,37 +87,26 @@ const dashboardSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(getCompanyDashboardStats.fulfilled, (state, action) => {
-        state.companyStats = action.payload;
+      .addCase(getAdminDashboardStats.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
       })
       .addCase(getAdminDashboardStats.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.adminStats = action.payload;
       })
-      .addCase(getRecentProperties.fulfilled, (state, action) => {
-        state.recentProperties = action.payload;
+      .addCase(getAdminDashboardStats.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       })
-      .addCase(getRecentLeads.fulfilled, (state, action) => {
-        state.recentLeads = action.payload;
+      .addCase(getCompanyDashboardStats.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
       })
-      .addMatcher(
-        (action) => action.type.endsWith("/pending"),
-        (state) => {
-          state.isLoading = true;
-        }
-      )
-      .addMatcher(
-        (action) => action.type.endsWith("/fulfilled"),
-        (state) => {
-          state.isLoading = false;
-        }
-      )
-      .addMatcher(
-        (action) => action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.isLoading = false;
-          state.error = action.payload as string;
-        }
-      );
+      .addCase(getCompanyDashboardStats.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.companyStats = action.payload;
+      });
   },
 });
 

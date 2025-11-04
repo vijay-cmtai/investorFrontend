@@ -1,5 +1,13 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../../api/axios";
+
+export interface Review {
+  _id: string;
+  rating: number;
+  comment: string;
+  user: { _id: string; name: string };
+  createdAt: string;
+}
 
 export interface Property {
   _id: string;
@@ -23,12 +31,17 @@ export interface Property {
     role: string;
   };
   createdAt: string;
+  reviews?: Review[];
+  averageRating: number;
+  numReviews: number;
 }
+
 interface UpdatePropertyPayload {
   title: string;
   description: string;
   price: number;
 }
+
 interface PropertyState {
   properties: Property[];
   property: Property | null;
@@ -37,6 +50,7 @@ interface PropertyState {
   isSuccess: boolean;
   message: string;
 }
+
 const initialState: PropertyState = {
   properties: [],
   property: null,
@@ -58,14 +72,9 @@ export const getProperties = createAsyncThunk<
   try {
     const params = new URLSearchParams();
     if (filters) {
-      if (filters.isFeatured) {
-        params.append("isFeatured", "true");
-      }
-      if (filters.city) {
-        params.append("city", filters.city);
-      }
+      if (filters.isFeatured) params.append("isFeatured", "true");
+      if (filters.city) params.append("city", filters.city);
     }
-
     const response = await API.get(`/properties?${params.toString()}`);
     return response.data.data;
   } catch (error: any) {
@@ -144,6 +153,21 @@ export const deleteProperty = createAsyncThunk<string, string>(
     }
   }
 );
+
+export const createReview = createAsyncThunk<
+  Review,
+  { propertyId: string; rating: number; comment: string }
+>("properties/createReview", async (reviewData, { rejectWithValue }) => {
+  try {
+    const { propertyId, ...body } = reviewData;
+    const response = await API.post(`/properties/${propertyId}/reviews`, body);
+    return response.data.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to submit review."
+    );
+  }
+});
 
 export const propertySlice = createSlice({
   name: "properties",
@@ -244,6 +268,16 @@ export const propertySlice = createSlice({
       })
       .addCase(deleteProperty.rejected, (state, action) => {
         state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload as string;
+      })
+      .addCase(createReview.fulfilled, (state, action) => {
+        state.isSuccess = true;
+        if (state.property && state.property.reviews) {
+          state.property.reviews.unshift(action.payload);
+        }
+      })
+      .addCase(createReview.rejected, (state, action) => {
         state.isError = true;
         state.message = action.payload as string;
       });

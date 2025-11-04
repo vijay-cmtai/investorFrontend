@@ -392,6 +392,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         <SelectContent>
                           <SelectItem value="sale">For Sale</SelectItem>
                           <SelectItem value="rent">For Rent</SelectItem>
+                          <SelectItem value="lease">For Lease</SelectItem>
+                          <SelectItem value="commercial">
+                            For Commercial
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

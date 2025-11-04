@@ -1,4 +1,3 @@
-// File: AdminDashboard.tsx
 
 import React, { useEffect } from "react";
 import {
@@ -210,5 +209,4 @@ const AdminDashboard = () => {
     </div>
   );
 };
-
 export default AdminDashboard;

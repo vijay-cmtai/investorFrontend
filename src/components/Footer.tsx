@@ -8,83 +8,85 @@ import {
   Mail,
   Phone,
   MapPin,
+  ArrowRight,
 } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 const Footer = () => {
   const companyLinks = [
     { label: "About Us", href: "/about-us" },
     { label: "Contact Us", href: "/contact-us" },
     { label: "Careers", href: "/careers" },
-    { label: "Press", href: "/press" },
-    { label: "Investor Relations", href: "/investor-relations" },
+    { label: "Blog", href: "/blog" },
   ];
   const propertyLinks = [
     { label: "Buy Property", href: "/buy" },
     { label: "Rent Property", href: "/rent" },
-    { label: "Commercial Properties", href: "/commercial" },
-    { label: "New Projects", href: "new-projects" },
-    { label: "Property Valuation", href: "property-services" },
+    { label: "New Projects", href: "/new-projects" },
+    { label: "Commercial", href: "/commercial" },
   ];
   const servicesLinks = [
     { label: "Home Loans", href: "/services/home-loans" },
-    { label: "Property Management", href: "/services/property-management" },
     { label: "Legal Services", href: "/services/legal-services" },
     { label: "Interior Design", href: "/services/interior-design" },
-    { label: "Property Insurance", href: "/services/property-insurance" },
   ];
-  const cities = [
-    "Mumbai",
-    "Delhi",
-    "Bangalore",
-    "Chennai",
-    "Hyderabad",
-    "Pune",
-    "Kolkata",
-    "Ahmedabad",
+
+  const socialLinks = [
+    { icon: Facebook, href: "#" },
+    { icon: Twitter, href: "#" },
+    { icon: Instagram, href: "#" },
+    { icon: Linkedin, href: "#" },
   ];
+
   return (
-    <footer className="bg-muted/30 border-t">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+    <footer className="bg-slate-900 text-slate-300">
+      <div className="container mx-auto px-4 py-16">
+        {/* Top Section with Links and Newsletter */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
+          {/* Brand Info */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center space-x-2 mb-4">
-              <div className="h-8 w-8 rounded bg-gradient-to-r from-primary to-primary-hover flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">
-                  I
-                </span>
-              </div>
-              <span className="text-xl font-bold text-foreground">
+            <Link to="/" className="flex items-center space-x-2 mb-6">
+              <img
+                src="/investor-logo.png"
+                alt="Investorsdeaal Logo"
+                className="h-16 w-auto"
+              />
+              <span className="text-2xl font-bold text-white">
                 Investorsdeaal
               </span>
             </Link>
-            <p className="text-muted-foreground mb-4 max-w-md">
-              India's leading real estate platform connecting buyers, sellers,
-              and renters. Find your perfect property with our comprehensive
-              listing service.
+            <p className="text-slate-400 mb-6 max-w-sm">
+              India's leading real estate platform to find your perfect property
+              with ease and confidence.
             </p>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>info@investorsdeaal.com</span>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3 text-slate-400 hover:text-white transition-colors">
+                <Mail className="h-5 w-5 text-primary" />
+                <a href="mailto:info@investorsdeaal.com">
+                  info@investorsdeaal.com
+                </a>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                <span>+91 98765 43210</span>
+              <div className="flex items-center space-x-3 text-slate-400 hover:text-white transition-colors">
+                <Phone className="h-5 w-5 text-primary" />
+                <a href="tel:+919876543210">+91 98765 43210</a>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
+              <div className="flex items-center space-x-3 text-slate-400">
+                <MapPin className="h-5 w-5 text-primary" />
                 <span>Mumbai, Maharashtra, India</span>
               </div>
             </div>
           </div>
+
+          {/* Links Sections */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Company</h4>
-            <ul className="space-y-2">
+            <h4 className="font-bold text-white mb-4 text-lg">Company</h4>
+            <ul className="space-y-3">
               {companyLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="text-slate-400 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -92,14 +94,15 @@ const Footer = () => {
               ))}
             </ul>
           </div>
+
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Properties</h4>
-            <ul className="space-y-2">
+            <h4 className="font-bold text-white mb-4 text-lg">Explore</h4>
+            <ul className="space-y-3">
               {propertyLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="text-slate-400 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -107,14 +110,15 @@ const Footer = () => {
               ))}
             </ul>
           </div>
+
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Services</h4>
-            <ul className="space-y-2">
+            <h4 className="font-bold text-white mb-4 text-lg">Services</h4>
+            <ul className="space-y-3">
               {servicesLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="text-slate-400 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -124,55 +128,22 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Cities */}
-        <div className="mt-8 pt-8 border-t">
-          <h4 className="font-semibold text-foreground mb-4">Popular Cities</h4>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {cities.map((city) => (
+        {/* Bottom Bar */}
+        <div className="mt-16 pt-8 border-t border-slate-700 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-sm text-slate-500 text-center md:text-left">
+            © {new Date().getFullYear()} Investorsdeaal. All Rights Reserved.
+          </p>
+          <div className="flex items-center space-x-4">
+            {socialLinks.map((social, index) => (
               <Link
-                key={city}
-                to="#"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                key={index}
+                to={social.href}
+                className="bg-slate-700 text-slate-300 hover:bg-primary hover:text-white p-2 rounded-full transition-colors"
+                aria-label={social.icon.displayName}
               >
-                Properties in {city}
+                <social.icon className="h-5 w-5" />
               </Link>
             ))}
-          </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-muted-foreground">
-            © 2024 Investorsdeaal. All rights reserved.
-          </p>
-          <div className="flex items-center space-x-4 mt-4 md:mt-0">
-            <span className="text-sm text-muted-foreground">Follow us:</span>
-            <div className="flex space-x-3">
-              <Link
-                to="#"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Facebook className="h-4 w-4" />
-              </Link>
-              <Link
-                to="#"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Twitter className="h-4 w-4" />
-              </Link>
-              <Link
-                to="#"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Instagram className="h-4 w-4" />
-              </Link>
-              <Link
-                to="#"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Linkedin className="h-4 w-4" />
-              </Link>
-            </div>
           </div>
         </div>
       </div>

@@ -1,11 +1,53 @@
-import React from "react";
+import React, { useEffect } from "react"; // <-- YEH LINE THEEK KAR DI GAYI HAI
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Loader2, Phone, Mail, MapPin } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  submitContactForm,
+  reset,
+} from "@/redux/features/contact/contactSlice";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card"; // Card import kar liya
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Label } from "@/components/ui/label";
+
+type FormData = {
+  name: string;
+  email: string;
+  message: string;
+};
 
 const ContactUs = () => {
+  const dispatch = useAppDispatch();
+  const { isLoading, isSuccess, isError, message } = useAppSelector(
+    (state) => state.contact
+  );
+
+  const {
+    register,
+    handleSubmit,
+    reset: resetForm,
+    formState: { errors },
+  } = useForm<FormData>();
+
+  useEffect(() => {
+    if (isSuccess && message) {
+      toast.success(message);
+      dispatch(reset());
+      resetForm();
+    }
+    if (isError && message) {
+      toast.error(message);
+      dispatch(reset());
+    }
+  }, [isSuccess, isError, message, dispatch, resetForm]);
+
+  const onSubmit = (data: FormData) => {
+    dispatch(submitContactForm(data));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Page Header */}
@@ -53,43 +95,66 @@ const ContactUs = () => {
               {/* Contact Form */}
               <div className="p-8">
                 <h2 className="text-2xl font-bold mb-6">Send us a Message</h2>
-                <form className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div>
-                    <label
-                      htmlFor="name"
-                      className="block text-sm font-medium text-muted-foreground mb-1"
-                    >
-                      Full Name
-                    </label>
-                    <Input id="name" type="text" placeholder="John Doe" />
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="John Doe"
+                      {...register("name", { required: "Name is required" })}
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.name.message}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-muted-foreground mb-1"
-                    >
-                      Email
-                    </label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="you@example.com"
+                      {...register("email", {
+                        required: "Email is required",
+                        pattern: {
+                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                          message: "Invalid email address",
+                        },
+                      })}
                     />
+                    {errors.email && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.email.message}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <label
-                      htmlFor="message"
-                      className="block text-sm font-medium text-muted-foreground mb-1"
-                    >
-                      Message
-                    </label>
+                    <Label htmlFor="message">Message</Label>
                     <Textarea
                       id="message"
                       placeholder="Your message here..."
                       rows={5}
+                      {...register("message", {
+                        required: "Message is required",
+                      })}
                     />
+                    {errors.message && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.message.message}
+                      </p>
+                    )}
                   </div>
-                  <Button type="submit" size="lg" className="w-full">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Send Message
                   </Button>
                 </form>

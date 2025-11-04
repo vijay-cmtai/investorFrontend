@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Menu, X, Heart, User, Building } from "lucide-react";
+import { Menu, X, Heart, User } from "lucide-react"; // Building icon hata diya hai
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/redux/hooks";
 import { logout, reset as resetAuth } from "@/redux/features/auth/authSlice";
@@ -29,6 +29,7 @@ const Header = () => {
     { label: "Commercial", href: "/commercial" },
     { label: "New Projects", href: "/new-projects" },
     { label: "Property Services", href: "/property-services" },
+    { label: "Blog", href: "/blog" },
   ];
 
   const handleSignOut = () => {
@@ -92,11 +93,13 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <Building className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">Investorsdeaal</span>
+          <Link to="/" className="flex items-center">
+            <img
+              src="/investor-logo.png"
+              alt="Investorsdeaal Logo"
+              className="h-16 w-auto"
+            />
           </Link>
-
           <nav className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
               <Link
@@ -110,13 +113,6 @@ const Header = () => {
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handlePostPropertyClick}
-            >
-              Post Property
-            </Button>
             {user ? (
               <>
                 <Link to="/wishlist">
