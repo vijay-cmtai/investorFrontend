@@ -32,6 +32,7 @@ import {
   Loader2,
   CheckCircle,
   Star,
+  PlayCircle,
 } from "lucide-react";
 import { InquiryModal } from "@/components/InquiryModal";
 import { MarkAsSoldModal } from "@/components/MarkAsSoldModal";
@@ -40,6 +41,11 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 
+interface MediaItem {
+  type: "image" | "video";
+  url: string;
+}
+
 const PropertyDetails: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -47,7 +53,7 @@ const PropertyDetails: FC = () => {
 
   const [isEnquiryModalOpen, setIsEnquiryModalOpen] = useState(false);
   const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
-  const [mainImage, setMainImage] = useState<string>("");
+  const [activeMedia, setActiveMedia] = useState<MediaItem | null>(null);
 
   const { property, isLoading, isError } = useAppSelector(
     (state: RootState) => state.properties
@@ -59,6 +65,11 @@ const PropertyDetails: FC = () => {
 
   const isWishlisted = property ? wishlistedIds.includes(property._id) : false;
 
+  const allMedia: MediaItem[] = [
+    ...(property?.images?.map((url) => ({ type: "image", url })) || []),
+    ...(property?.videos?.map((url) => ({ type: "video", url })) || []),
+  ];
+
   useEffect(() => {
     if (id) {
       dispatch(getPropertyById(id));
@@ -69,8 +80,8 @@ const PropertyDetails: FC = () => {
   }, [dispatch, id]);
 
   useEffect(() => {
-    if (property?.images && property.images.length > 0) {
-      setMainImage(property.images[0]);
+    if (allMedia.length > 0) {
+      setActiveMedia(allMedia[0]);
     }
   }, [property]);
 
@@ -88,7 +99,10 @@ const PropertyDetails: FC = () => {
   const handleStartChat = () => {
     const ownerPhone = property?.user?.phone || "911234567890";
     const message = `Hello, I'm interested in your property "${property?.title}".`;
-    const whatsappUrl = `https://wa.me/${ownerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${ownerPhone.replace(
+      /\D/g,
+      ""
+    )}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -164,33 +178,53 @@ const PropertyDetails: FC = () => {
           <div className="lg:col-span-2 space-y-8">
             <Card className="overflow-hidden animate-scale-in">
               <CardContent className="p-4">
-                <div className="aspect-video w-full overflow-hidden rounded-lg mb-4">
-                  <img
-                    src={
-                      mainImage ||
-                      "https://via.placeholder.com/800x500?text=No+Image"
-                    }
-                    alt={property.title}
-                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                  />
+                <div className="aspect-video w-full overflow-hidden rounded-lg mb-4 bg-black">
+                  {activeMedia?.type === "image" ? (
+                    <img
+                      src={
+                        activeMedia.url ||
+                        "https://via.placeholder.com/800x500?text=No+Image"
+                      }
+                      alt={property.title}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                  ) : activeMedia?.type === "video" ? (
+                    <video
+                      src={activeMedia.url}
+                      controls
+                      autoPlay
+                      muted
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      No Media Available
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                  {property.images.map((image, index) => (
+                  {allMedia.map((media, index) => (
                     <div
                       key={index}
                       className={cn(
-                        "aspect-square rounded-md overflow-hidden cursor-pointer border-2",
-                        mainImage === image
+                        "aspect-square rounded-md overflow-hidden cursor-pointer border-2 relative",
+                        activeMedia?.url === media.url
                           ? "border-primary"
                           : "border-transparent"
                       )}
-                      onClick={() => setMainImage(image)}
+                      onClick={() => setActiveMedia(media)}
                     >
-                      <img
-                        src={image}
-                        alt={`Thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      {media.type === "image" ? (
+                        <img
+                          src={media.url}
+                          alt={`Thumbnail ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-black flex items-center justify-center">
+                          <PlayCircle className="w-8 h-8 text-white" />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -467,7 +501,11 @@ const ReviewItem = ({ review }: { review: Review }) => (
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`w-4 h-4 ${i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+            className={`w-4 h-4 ${
+              i < review.rating
+                ? "text-yellow-400 fill-yellow-400"
+                : "text-gray-300"
+            }`}
           />
         ))}
       </div>
@@ -530,7 +568,11 @@ const AddReviewForm = ({
             return (
               <Star
                 key={starValue}
-                className={`w-7 h-7 cursor-pointer transition-colors ${starValue <= (hoverRating || rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                className={`w-7 h-7 cursor-pointer transition-colors ${
+                  starValue <= (hoverRating || rating)
+                    ? "text-yellow-400 fill-yellow-400"
+                    : "text-gray-300"
+                }`}
                 onClick={() => setRating(starValue)}
                 onMouseEnter={() => setHoverRating(starValue)}
                 onMouseLeave={() => setHoverRating(0)}

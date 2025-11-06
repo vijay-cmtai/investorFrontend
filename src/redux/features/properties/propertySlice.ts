@@ -21,6 +21,7 @@ export interface Property {
   transaction_type: string;
   furnishingStatus: string;
   images?: string[];
+  videos?: string[]; // <-- YEH NAYA FIELD HAI
   location: {
     city: string;
     fullAddress: string;

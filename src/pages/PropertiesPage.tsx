@@ -126,7 +126,7 @@ const PropertiesPage = () => {
   const handleClearFilters = () => setFilters({});
 
   const heroBackgroundImage =
-    "https://images.unsplash.com/photo-1600585152225-358b54c5ae90?q=80&w=2070&auto=format&fit=crop";
+    "https://watermark.lovepik.com/photo/40143/6442.jpg_wh1200.jpg";
 
   return (
     <div className="min-h-screen bg-muted/20">

@@ -29,13 +29,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2, UploadCloud, X, IndianRupee } from "lucide-react";
+import { Loader2, UploadCloud, X, IndianRupee, Video } from "lucide-react";
 import { Property } from "@/redux/features/properties/propertySlice";
 
 const formSchema = z.object({
@@ -64,6 +63,7 @@ const formSchema = z.object({
   commissionPercentage: z.coerce.number().optional(),
   assignedAssociate: z.string().optional(),
   images: z.any().optional(),
+  videos: z.any().optional(),
   yearBuilt: z.coerce.number().optional(),
   floor: z.coerce.number().optional(),
   totalFloors: z.coerce.number().optional(),
@@ -88,6 +88,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   const { users: associates } = useAppSelector((state) => state.users);
 
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
   const mode = initialData ? "edit" : "add";
 
   const form = useForm<PropertyFormData>({
@@ -115,6 +116,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       floor: initialData?.floor || undefined,
       totalFloors: initialData?.totalFloors || undefined,
       parkingSpaces: initialData?.parkingSpaces || 0,
+      images: [],
+      videos: [],
     },
   });
 
@@ -122,37 +125,71 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     if (user?.role === "Admin" || user?.role === "Company") {
       dispatch(getAssociates());
     }
-    if (mode === "edit" && initialData?.images) {
-      setImagePreviews(initialData.images);
+    if (mode === "edit") {
+      if (initialData?.images) setImagePreviews(initialData.images);
+      if (initialData?.videos) setVideoPreviews(initialData.videos);
     }
   }, [dispatch, user, mode, initialData]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles) => {
-      const currentFiles = form.getValues("images") || [];
-      const totalImages =
-        (mode === "edit"
-          ? imagePreviews.length - (initialData?.images?.length || 0)
-          : 0) +
-        currentFiles.length +
-        acceptedFiles.length;
-      if (totalImages > 5) {
-        toast.error("You can upload a maximum of 5 images.");
-        return;
-      }
-      const newFiles = [...currentFiles, ...acceptedFiles];
-      form.setValue("images", newFiles);
-      const newPreviews = acceptedFiles.map((file) =>
-        URL.createObjectURL(file)
+      const imageFiles = acceptedFiles.filter((f) =>
+        f.type.startsWith("image/")
       );
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
+      const videoFiles = acceptedFiles.filter((f) =>
+        f.type.startsWith("video/")
+      );
+
+      const currentImages = form.getValues("images") || [];
+      if (currentImages.length + imageFiles.length > 5) {
+        toast.error("You can upload a maximum of 5 images.");
+      } else {
+        form.setValue("images", [...currentImages, ...imageFiles]);
+        const newImagePreviews = imageFiles.map((file) =>
+          URL.createObjectURL(file)
+        );
+        setImagePreviews((prev) => [...prev, ...newImagePreviews]);
+      }
+
+      const currentVideos = form.getValues("videos") || [];
+      if (currentVideos.length + videoFiles.length > 2) {
+        toast.error("You can upload a maximum of 2 videos.");
+      } else {
+        form.setValue("videos", [...currentVideos, ...videoFiles]);
+        const newVideoPreviews = videoFiles.map((file) =>
+          URL.createObjectURL(file)
+        );
+        setVideoPreviews((prev) => [...prev, ...newVideoPreviews]);
+      }
     },
-    accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp"] },
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".webp"],
+      "video/*": [".mp4", ".mov", ".avi"],
+    },
   });
 
-  const handleRemoveImage = (index: number, previewUrl: string) => {
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    setImagePreviews(newPreviews);
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImagePreviews((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
+    form.setValue(
+      "images",
+      form
+        .getValues("images")
+        .filter((_: any, index: number) => index !== indexToRemove)
+    );
+  };
+
+  const handleRemoveVideo = (indexToRemove: number) => {
+    setVideoPreviews((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
+    form.setValue(
+      "videos",
+      form
+        .getValues("videos")
+        .filter((_: any, index: number) => index !== indexToRemove)
+    );
   };
 
   const onFormSubmit = (values: PropertyFormData) => {
@@ -175,6 +212,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
           "fullAddress",
           "pincode",
           "images",
+          "videos",
           "amenities",
         ].includes(key)
       ) {
@@ -185,11 +223,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     });
 
     values.amenities?.forEach((amenity) => data.append("amenities", amenity));
+
     if (values.images) {
-      for (let i = 0; i < values.images.length; i++) {
-        data.append("images", values.images[i]);
-      }
+      values.images.forEach((file: File) => {
+        data.append("images", file);
+      });
     }
+    if (values.videos) {
+      values.videos.forEach((file: File) => {
+        data.append("videos", file);
+      });
+    }
+
     onSubmit(data);
   };
 
@@ -203,8 +248,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     "Garden",
     "Clubhouse",
   ];
-
-  // --- YAHAN NAYI CATEGORY LIST BANAI HAI ---
   const propertyTypes = [
     "Residential",
     "Commercial",
@@ -284,6 +327,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 )}
               />
             </div>
+
             <div className="space-y-6 pt-6 border-t">
               <h3 className="text-lg font-medium border-b pb-2">
                 Location Details
@@ -358,6 +402,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 />
               </div>
             </div>
+
             <div className="space-y-6 pt-6 border-t">
               <h3 className="text-lg font-medium border-b pb-2">
                 Property Specifications
@@ -474,7 +519,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {/* --- YAHAN DROP-DOWN LIST KO UPDATE KIYA HAI --- */}
                           {propertyTypes.map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
@@ -542,6 +586,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 />
               </div>
             </div>
+
             {(user?.role === "Admin" || user?.role === "Company") && (
               <div className="space-y-6 pt-6 border-t">
                 <h3 className="text-lg font-medium border-b pb-2">
@@ -594,9 +639,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 </div>
               </div>
             )}
+
             <div className="space-y-6 pt-6 border-t">
               <h3 className="text-lg font-medium border-b pb-2">
-                Features & Images
+                Features & Media
               </h3>
               <FormField
                 name="amenities"
@@ -639,8 +685,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                   </FormItem>
                 )}
               />
+
               <div className="space-y-4">
-                <Label>Property Images (Max 5)</Label>
+                <Label>Upload Images (Max 5) & Videos (Max 2)</Label>
                 <div
                   {...getRootProps()}
                   className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragActive ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}
@@ -652,33 +699,67 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                       Click to upload or drag and drop
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      PNG, JPG, JPEG up to 5 files
+                      Images (PNG, JPG) & Videos (MP4, MOV)
                     </p>
                   </div>
                 </div>
+
                 {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative aspect-square">
-                        <img
-                          src={preview}
-                          alt={`Preview ${index}`}
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md"
-                          onClick={() => handleRemoveImage(index, preview)}
+                  <div>
+                    <Label className="text-sm font-medium">
+                      Image Previews
+                    </Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-2">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative aspect-square">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index}`}
+                            className="w-full h-full object-cover rounded-md"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md"
+                            onClick={() => handleRemoveImage(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {videoPreviews.length > 0 && (
+                  <div className="mt-6">
+                    <Label className="text-sm font-medium">
+                      Video Previews
+                    </Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-2">
+                      {videoPreviews.map((preview, index) => (
+                        <div
+                          key={index}
+                          className="relative aspect-video bg-black rounded-md flex items-center justify-center"
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                          <Video className="w-8 h-8 text-white" />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md z-10"
+                            onClick={() => handleRemoveVideo(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
+
               {user?.role === "Admin" && (
                 <FormField
                   name="isFeatured"
@@ -705,7 +786,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               size="lg"
               disabled={isLoading}
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading
                 ? "Submitting..."
                 : mode === "edit"
