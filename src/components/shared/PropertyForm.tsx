@@ -36,7 +36,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2, UploadCloud, X, IndianRupee } from "lucide-react";
-import { Property } from "@/redux/features/properties/propertySlice"; // Property type import karein
+import { Property } from "@/redux/features/properties/propertySlice";
 
 const formSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters."),
@@ -63,7 +63,7 @@ const formSchema = z.object({
   isFeatured: z.boolean().default(false),
   commissionPercentage: z.coerce.number().optional(),
   assignedAssociate: z.string().optional(),
-  images: z.any().optional(), // Make images optional for updates
+  images: z.any().optional(),
   yearBuilt: z.coerce.number().optional(),
   floor: z.coerce.number().optional(),
   totalFloors: z.coerce.number().optional(),
@@ -75,7 +75,7 @@ type PropertyFormData = z.infer<typeof formSchema>;
 interface PropertyFormProps {
   onSubmit: (formData: FormData) => void;
   isLoading: boolean;
-  initialData?: Property | null; // <-- YEH NAYA PROP HAI
+  initialData?: Property | null;
 }
 
 const PropertyForm: React.FC<PropertyFormProps> = ({
@@ -122,7 +122,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     if (user?.role === "Admin" || user?.role === "Company") {
       dispatch(getAssociates());
     }
-    // Edit mode mein existing images ka preview set karein
     if (mode === "edit" && initialData?.images) {
       setImagePreviews(initialData.images);
     }
@@ -152,10 +151,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   });
 
   const handleRemoveImage = (index: number, previewUrl: string) => {
-    // Implement logic to handle removing existing vs new images if needed
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
     setImagePreviews(newPreviews);
-    // You might need more complex logic to track which old images to delete
   };
 
   const onFormSubmit = (values: PropertyFormData) => {
@@ -169,7 +166,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     };
     data.append("location", JSON.stringify(location));
 
-    // Sabhi fields ko append karein
     Object.entries(values).forEach(([key, value]) => {
       if (
         ![
@@ -206,6 +202,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     "Lift",
     "Garden",
     "Clubhouse",
+  ];
+
+  // --- YAHAN NAYI CATEGORY LIST BANAI HAI ---
+  const propertyTypes = [
+    "Residential",
+    "Commercial",
+    "Agriculture",
+    "Industrial",
+    "Resale",
+    "New Launch",
+    "Upcoming",
+    "Emergency",
+    "Apartment",
+    "Villa",
+    "Plot",
+    "Office",
+    "Farmhouse",
+    "Builder Floor",
   ];
 
   return (
@@ -460,17 +474,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Apartment">Apartment</SelectItem>
-                          <SelectItem value="Villa">Villa</SelectItem>
-                          <SelectItem value="Plot">Plot</SelectItem>
-                          <SelectItem value="Commercial Space">
-                            Commercial Space
-                          </SelectItem>
-                          <SelectItem value="Office">Office</SelectItem>
-                          <SelectItem value="Farmhouse">Farmhouse</SelectItem>
-                          <SelectItem value="Builder Floor">
-                            Builder Floor
-                          </SelectItem>
+                          {/* --- YAHAN DROP-DOWN LIST KO UPDATE KIYA HAI --- */}
+                          {propertyTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -496,7 +505,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                           <SelectItem value="sale">For Sale</SelectItem>
                           <SelectItem value="rent">For Rent</SelectItem>
                           <SelectItem value="lease">For Lease</SelectItem>
-                          <SelectItem value="commercial">Commercial</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

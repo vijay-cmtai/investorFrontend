@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../../api/axios";
 
-// Interfaces
 export interface Review {
   _id: string;
   rating: number;
@@ -74,9 +73,9 @@ interface GetPropertiesFilters {
   isFeatured?: boolean;
   isHotDeal?: boolean;
   city?: string;
+  property_type?: string;
 }
 
-// Thunks
 export const getProperties = createAsyncThunk<
   Property[],
   GetPropertiesFilters | void
@@ -87,6 +86,8 @@ export const getProperties = createAsyncThunk<
       if (filters.isFeatured) params.append("isFeatured", "true");
       if (filters.isHotDeal) params.append("isHotDeal", "true");
       if (filters.city) params.append("city", filters.city);
+      if (filters.property_type)
+        params.append("property_type", filters.property_type);
     }
     const response = await API.get(`/properties?${params.toString()}`);
     return response.data.data;

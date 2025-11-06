@@ -34,7 +34,6 @@ import Autoplay from "embla-carousel-autoplay";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-// Skeleton component remains the same
 const PropertyCardSkeleton: FC = () => (
   <Card className="overflow-hidden animate-pulse">
     <div className="h-52 bg-muted"></div>
@@ -82,13 +81,16 @@ const Index: FC = () => {
     navigate(`/property/${propertyId}`);
   };
 
-  // Animation variants for a staggered effect
+  const handleCategoryClick = (category: string) => {
+    navigate(`/properties?type=${category}`);
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.15,
+        staggerChildren: 0.1,
       },
     },
   };
@@ -99,12 +101,11 @@ const Index: FC = () => {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
+        duration: 0.5,
       },
     },
   };
 
-  // Data for other sections
   const cityData = [
     {
       city: "Mumbai",
@@ -122,6 +123,7 @@ const Index: FC = () => {
       className: "",
     },
   ];
+
   const testimonials = [
     {
       name: "Rohan & Priya",
@@ -145,11 +147,10 @@ const Index: FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* === START: NEW BANNER SECTION AS PER YOUR DESIGN === */}
       <section
         className="relative text-white pt-32 pb-20 min-h-screen flex items-center justify-center"
         style={{
-          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop')`,
+          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",
@@ -161,42 +162,31 @@ const Index: FC = () => {
           animate="visible"
           className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center"
         >
-          {/* === YAHAN BADLAV KIYA GAYA HAI === */}
-          {/* Logo Image */}
           <motion.div variants={itemVariants}>
             <img
-              src="/investor-logo.png" // Yakeen kar lein ki yeh file public folder mein hai
+              src="/investor-logo.png"
               alt="Investors Deaal Logo"
-              className="w-28 h-auto mx-auto mb-4" // Logo ka size yahan se control karein
+              className="w-28 h-auto mx-auto mb-4"
             />
           </motion.div>
-          {/* === BADLAV KHATAM === */}
-
-          {/* Company Name */}
           <motion.h1
             variants={itemVariants}
             className="text-4xl md:text-5xl font-bold tracking-tight mb-2"
           >
             Investors Deaal
           </motion.h1>
-
-          {/* Tagline 1 */}
           <motion.p
             variants={itemVariants}
             className="text-xl md:text-2xl text-white/80 mb-4 font-light tracking-widest"
           >
             Land to Legacy
           </motion.p>
-
-          {/* Tagline 2 */}
           <motion.p
             variants={itemVariants}
             className="text-lg md:text-xl text-white/70 max-w-3xl mb-12"
           >
             India's first Real Estate technology-based company platform.
           </motion.p>
-
-          {/* Main Heading */}
           <motion.h2
             variants={itemVariants}
             className="text-5xl md:text-7xl font-extrabold mb-12 tracking-tighter"
@@ -207,8 +197,6 @@ const Index: FC = () => {
             </span>{" "}
             in India
           </motion.h2>
-
-          {/* Categories */}
           <motion.div variants={itemVariants} className="w-full max-w-5xl">
             <div className="flex flex-wrap justify-center gap-3 md:gap-4">
               {[
@@ -223,8 +211,9 @@ const Index: FC = () => {
               ].map((category) => (
                 <Button
                   key={category}
+                  onClick={() => handleCategoryClick(category)}
                   variant="outline"
-                  className="bg-white/10 text-white border-white/20 backdrop-blur-sm hover:bg-white/20 hover:border-white/40 transition-colors px-6 py-2 text-base"
+                  className="bg-white/10 text-white border-white/20 backdrop-blur-sm hover:bg-white/20 hover:border-white/40 transition-all px-6 py-3 rounded-lg"
                 >
                   {category}
                 </Button>
@@ -233,9 +222,6 @@ const Index: FC = () => {
           </motion.div>
         </motion.div>
       </section>
-      {/* === END: NEW BANNER SECTION === */}
-
-      {/* The rest of the page remains the same */}
 
       <section className="py-20 sm:py-24">
         <div className="container mx-auto px-4">
@@ -248,7 +234,7 @@ const Index: FC = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {isLoading && properties.length === 0
+            {isLoading
               ? [...Array(6)].map((_, i) => <PropertyCardSkeleton key={i} />)
               : properties.map((property) => (
                   <div
@@ -267,7 +253,7 @@ const Index: FC = () => {
           <div className="text-center mt-12">
             <Button
               size="lg"
-              onClick={() => navigate("/buy")}
+              onClick={() => navigate("/properties")}
               className="px-8 text-lg group"
             >
               Explore All Properties
@@ -436,7 +422,9 @@ const Index: FC = () => {
                         <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/20">
                           <Avatar className="w-12 h-12">
                             <AvatarImage
-                              src={`https://avatar.iran.liara.run/public?username=${t.name.split("&")[0].trim()}`}
+                              src={`https://avatar.iran.liara.run/public?username=${t.name
+                                .split("&")[0]
+                                .trim()}`}
                             />
                             <AvatarFallback>{t.name.charAt(0)}</AvatarFallback>
                           </Avatar>
