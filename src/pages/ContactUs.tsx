@@ -112,7 +112,7 @@ const ContactUs = () => {
                   <div>
                     <h3 className="font-semibold text-lg">Call Us</h3>
                     <p className="text-gray-600 hover:text-red-600 transition-colors">
-                      +91 98765 43210
+                      +91 9179140133
                     </p>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ const ContactUs = () => {
                   <div>
                     <h3 className="font-semibold text-lg">Email Us</h3>
                     <p className="text-gray-600 hover:text-red-600 transition-colors">
-                      contact@investorsdeaal.com
+                      infoinvestorsdeaal@gmail.com
                     </p>
                   </div>
                 </div>
@@ -134,7 +134,7 @@ const ContactUs = () => {
                   <div>
                     <h3 className="font-semibold text-lg">Our Office</h3>
                     <p className="text-gray-600">
-                      123 Real Estate Avenue, Noida Sector 63, New Delhi, India
+                      A-96, Noida Sector 63, New Delhi, India
                     </p>
                   </div>
                 </div>
@@ -192,7 +192,7 @@ const ContactUs = () => {
                           <FormControl>
                             <Input
                               type="tel"
-                              placeholder="+91 99999 99999"
+                              placeholder="+91 9179140133"
                               {...field}
                             />
                           </FormControl>
