@@ -1,29 +1,22 @@
-import React, { useEffect, useRef, FC } from "react";
+import React, { FC } from "react";
 import { motion } from "framer-motion";
 import PropertyCard from "@/components/PropertyCard";
-import PropertySearch from "@/components/PropertySearch";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  TrendingUp,
-  MapPin,
-  Users,
   Shield,
   Award,
+  TrendingUp,
   Quote,
-  Building,
+  ArrowRight,
   Home,
+  Building,
   Warehouse,
   SquareStack,
-  ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import {
-  getProperties,
-  Property,
-} from "@/redux/features/properties/propertySlice";
+import { getProperties } from "@/redux/features/properties/propertySlice";
 import {
   getWishlist,
   toggleWishlist,
@@ -41,6 +34,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// Skeleton component remains the same
 const PropertyCardSkeleton: FC = () => (
   <Card className="overflow-hidden animate-pulse">
     <div className="h-52 bg-muted"></div>
@@ -59,7 +53,6 @@ const PropertyCardSkeleton: FC = () => (
 const Index: FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const plugin = useRef(Autoplay({ delay: 4000, stopOnInteraction: true }));
 
   const { user } = useAppSelector((state: RootState) => state.auth);
   const { properties, isLoading } = useAppSelector(
@@ -69,7 +62,7 @@ const Index: FC = () => {
     (state: RootState) => state.wishlist
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     dispatch(getProperties({ isFeatured: true, limit: 6 }));
     if (user) {
       dispatch(getWishlist());
@@ -89,6 +82,29 @@ const Index: FC = () => {
     navigate(`/property/${propertyId}`);
   };
 
+  // Animation variants for a staggered effect
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+      },
+    },
+  };
+
+  // Data for other sections
   const cityData = [
     {
       city: "Mumbai",
@@ -106,13 +122,12 @@ const Index: FC = () => {
       className: "",
     },
   ];
-
   const testimonials = [
     {
       name: "Rohan & Priya",
       city: "Mumbai",
       quote:
-        "Photon made our dream of owning a home in Mumbai a reality. The process was so smooth and transparent. Highly recommended!",
+        "Investors Deaal made our dream of owning a home in Mumbai a reality. The process was so smooth and transparent. Highly recommended!",
     },
     {
       name: "Amit Singh",
@@ -124,63 +139,103 @@ const Index: FC = () => {
       name: "Sneha Reddy",
       city: "Bangalore",
       quote:
-        "As a first-time investor, I was nervous. The market insights provided by Photon helped me make a confident and profitable decision.",
+        "As a first-time investor, I was nervous. The market insights provided by Investors Deaal helped me make a confident and profitable decision.",
     },
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* === START: NEW BANNER SECTION AS PER YOUR DESIGN === */}
       <section
-        className="relative text-white pt-32 pb-20 min-h-[80vh] md:min-h-[700px] flex items-center"
+        className="relative text-white pt-32 pb-20 min-h-screen flex items-center justify-center"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1582407947304-fd86f028f716')`,
+          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",
         }}
       >
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl text-center mx-auto"
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center"
+        >
+          {/* === YAHAN BADLAV KIYA GAYA HAI === */}
+          {/* Logo Image */}
+          <motion.div variants={itemVariants}>
+            <img
+              src="/investor-logo.png" // Yakeen kar lein ki yeh file public folder mein hai
+              alt="Investors Deaal Logo"
+              className="w-28 h-auto mx-auto mb-4" // Logo ka size yahan se control karein
+            />
+          </motion.div>
+          {/* === BADLAV KHATAM === */}
+
+          {/* Company Name */}
+          <motion.h1
+            variants={itemVariants}
+            className="text-4xl md:text-5xl font-bold tracking-tight mb-2"
           >
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight">
-              Find Your Next{" "}
-              <span className="bg-gradient-to-r from-blue-400 to-teal-300 bg-clip-text text-transparent">
-                Dream Property
-              </span>{" "}
-              in India
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-white/90">
-              Discover perfect homes, offices, and investment opportunities.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 mb-10">
+            Investors Deaal
+          </motion.h1>
+
+          {/* Tagline 1 */}
+          <motion.p
+            variants={itemVariants}
+            className="text-xl md:text-2xl text-white/80 mb-4 font-light tracking-widest"
+          >
+            Land to Legacy
+          </motion.p>
+
+          {/* Tagline 2 */}
+          <motion.p
+            variants={itemVariants}
+            className="text-lg md:text-xl text-white/70 max-w-3xl mb-12"
+          >
+            India's first Real Estate technology-based company platform.
+          </motion.p>
+
+          {/* Main Heading */}
+          <motion.h2
+            variants={itemVariants}
+            className="text-5xl md:text-7xl font-extrabold mb-12 tracking-tighter"
+          >
+            Find Your Next <br className="md:hidden" />
+            <span className="bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">
+              Dream Property
+            </span>{" "}
+            in India
+          </motion.h2>
+
+          {/* Categories */}
+          <motion.div variants={itemVariants} className="w-full max-w-5xl">
+            <div className="flex flex-wrap justify-center gap-3 md:gap-4">
               {[
-                { icon: TrendingUp, text: "50,000+ Properties" },
-                { icon: MapPin, text: "100+ Cities" },
-                { icon: Users, text: "1M+ Happy Customers" },
-              ].map((item, index) => (
-                <Badge
-                  key={index}
+                "Residential",
+                "Commercial",
+                "Agriculture",
+                "Industrial",
+                "Resale",
+                "New Launch",
+                "Upcoming",
+                "Emergency",
+              ].map((category) => (
+                <Button
+                  key={category}
                   variant="outline"
-                  className="bg-white/10 text-white border-white/20 px-4 py-2 text-sm backdrop-blur-sm"
+                  className="bg-white/10 text-white border-white/20 backdrop-blur-sm hover:bg-white/20 hover:border-white/40 transition-colors px-6 py-2 text-base"
                 >
-                  <item.icon className="w-4 h-4 mr-2" /> {item.text}
-                </Badge>
+                  {category}
+                </Button>
               ))}
             </div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <PropertySearch />
-            </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
+      {/* === END: NEW BANNER SECTION === */}
+
+      {/* The rest of the page remains the same */}
 
       <section className="py-20 sm:py-24">
         <div className="container mx-auto px-4">
@@ -308,7 +363,7 @@ const Index: FC = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why Choose Photon?
+              Why Choose Investors Deaal?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Your trusted partner in navigating the real estate landscape.
