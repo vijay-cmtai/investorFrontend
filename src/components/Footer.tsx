@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-
 const Footer = () => {
   const companyLinks = [
     { label: "About Us", href: "/about-us" },
@@ -31,7 +30,6 @@ const Footer = () => {
     { label: "Legal Services", href: "/services/legal-services" },
     { label: "Interior Design", href: "/services/interior-design" },
   ];
-
   const socialLinks = [
     { icon: Facebook, href: "#" },
     { icon: Twitter, href: "#" },
@@ -64,16 +62,16 @@ const Footer = () => {
               <div className="flex items-center space-x-3 text-slate-400 hover:text-white transition-colors">
                 <Mail className="h-5 w-5 text-primary" />
                 <a href="mailto:info@investorsdeaal.com">
-                  info@investorsdeaal.com
+                  infoinvestorsdeaal@gmail.com
                 </a>
               </div>
               <div className="flex items-center space-x-3 text-slate-400 hover:text-white transition-colors">
                 <Phone className="h-5 w-5 text-primary" />
-                <a href="tel:+919876543210">+91 98765 43210</a>
+                <a href="tel:+919876543210">+919179140133</a>
               </div>
               <div className="flex items-center space-x-3 text-slate-400">
                 <MapPin className="h-5 w-5 text-primary" />
-                <span>Mumbai, Maharashtra, India</span>
+                <span>Noida,Uttar Pradesh,India</span>
               </div>
             </div>
           </div>
