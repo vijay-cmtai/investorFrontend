@@ -148,7 +148,7 @@ const Index: FC = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <section
-        className="relative text-white pt-32 pb-20 min-h-screen flex items-center justify-center"
+        className="relative text-white pt-28 pb-20 min-h-screen flex items-center justify-center"
         style={{
           backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop')`,
           backgroundSize: "cover",
@@ -166,7 +166,7 @@ const Index: FC = () => {
             <img
               src="/investor-logo.png"
               alt="Investors Deaal Logo"
-              className="w-28 h-auto mx-auto mb-4"
+              className="w-24 h-auto mx-auto mb-4"
             />
           </motion.div>
           <motion.h1
@@ -177,15 +177,16 @@ const Index: FC = () => {
           </motion.h1>
           <motion.p
             variants={itemVariants}
-            className="text-xl md:text-2xl text-white/80 mb-4 font-light tracking-widest"
+            className="text-xl md:text-2xl text-white/80 mb-6 font-light tracking-widest"
           >
             Land to Legacy
           </motion.p>
           <motion.p
             variants={itemVariants}
-            className="text-lg md:text-xl text-white/70 max-w-3xl mb-12"
+            className="text-lg md:text-xl text-white/70 max-w-3xl mb-10"
           >
-            India's first Real Estate technology-based company platform.
+            India's <span className="font-semibold text-white">1st</span> Real
+            Estate technology-based company platform.
           </motion.p>
           <motion.h2
             variants={itemVariants}
@@ -250,7 +251,7 @@ const Index: FC = () => {
                   </div>
                 ))}
           </div>
-          <div className="text-center mt-12">
+          <div className="text-center mt-16">
             <Button
               size="lg"
               onClick={() => navigate("/properties")}
