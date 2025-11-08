@@ -198,10 +198,8 @@ const Index: FC = () => {
             </span>{" "}
             in India
           </motion.h2>
-          <motion.div variants={itemVariants} className="w-full max-w-xl">
-            {" "}
-            {/* Adjusted max-w for better spacing */}
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
+          <motion.div variants={itemVariants} className="w-full max-w-5xl">
+            <div className="grid grid-cols-2 gap-3 md:flex md:flex-wrap md:justify-center md:gap-4">
               {[
                 "Residential",
                 "Commercial",
