@@ -207,7 +207,7 @@ const Index: FC = () => {
                 "Industrial",
                 "Resale",
                 "New Launch",
-                "Upcoming",
+                "Rental",
                 "Emergency",
               ].map((category) => (
                 <Button
