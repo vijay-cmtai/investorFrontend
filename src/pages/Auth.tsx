@@ -85,7 +85,15 @@ const Auth = () => {
       return;
     }
     const { name, email, password } = registerData;
-    dispatch(register({ name, email, password, role: registerRole }));
+
+    const payload = {
+      name,
+      email,
+      password,
+      role: registerRole,
+    };
+
+    dispatch(register(payload));
   };
 
   const handleOtpSubmit = (e: React.FormEvent) => {
@@ -203,6 +211,7 @@ const Auth = () => {
                   <TabsTrigger value="Customer">Customer</TabsTrigger>
                   <TabsTrigger value="Associate">Associate</TabsTrigger>
                   <TabsTrigger value="Company">Company</TabsTrigger>
+                  {/* <TabsTrigger value="Admin">Admin</TabsTrigger> */}
                 </TabsList>
                 <form
                   onSubmit={handleRegisterSubmit}
@@ -256,6 +265,7 @@ const Auth = () => {
                       required
                     />
                   </div>
+
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

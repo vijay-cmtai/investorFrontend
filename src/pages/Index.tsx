@@ -186,7 +186,7 @@ const Index: FC = () => {
             className="text-lg md:text-xl text-white/70 max-w-3xl mb-10"
           >
             India's <span className="font-semibold text-white">1st</span> Real
-            Estate technology-based company platform.
+            Estate technology-based platform.
           </motion.p>
           <motion.h2
             variants={itemVariants}
@@ -199,7 +199,7 @@ const Index: FC = () => {
             in India
           </motion.h2>
           <motion.div variants={itemVariants} className="w-full max-w-5xl">
-            <div className="flex flex-wrap justify-center gap-3 md:gap-4">
+            <div className="grid grid-cols-2 gap-3 md:flex md:flex-wrap md:justify-center md:gap-4">
               {[
                 "Residential",
                 "Commercial",

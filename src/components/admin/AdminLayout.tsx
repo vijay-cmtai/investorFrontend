@@ -4,9 +4,9 @@ import {
   Outlet,
   useNavigate,
   useLocation,
-  Routes, // Yeh import karein
-  Route, // Yeh import karein
-  Navigate, // Yeh import karein
+  Routes, 
+  Route, 
+  Navigate, 
 } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -39,7 +39,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Apne sabhi admin pages ko yahan import karein
 import AdminDashboard from "@/pages/admin/dashboard";
 import AddPropertyAdmin from "@/pages/admin/AddPropertyByAdmin";
 import ManageProperties from "@/pages/admin/ManageProperties";
@@ -63,7 +62,6 @@ const sidebarNavItems = [
   { title: "Manage Blogs", href: "/admin/manage-blogs", icon: Building2 },
   { title: "Leads", href: "/admin/leads", icon: Target },
   { title: "Users", href: "/admin/users", icon: Users },
-  { title: "MLM System", href: "/admin/mlm-system", icon: Network },
   { title: "Commissions", href: "/admin/commissions", icon: DollarSign },
   { title: "Reports", href: "/admin/reports", icon: FileBarChart },
   { title: "Roles & Access", href: "/admin/roles", icon: ShieldCheck },

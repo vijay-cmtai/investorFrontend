@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Phone, Mail, MapPin, Building2 } from "lucide-react";
+import { Loader2, Phone, Mail, MapPin, Building2, Send } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   submitContactForm,
@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -29,6 +28,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { motion } from "framer-motion";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -74,75 +74,93 @@ const ContactUs = () => {
   };
 
   const bannerImageUrl =
-    "https://www.shutterstock.com/image-photo/using-laptop-show-icon-address-600nw-2521386695.jpg";
+    "https://images.unsplash.com/photo-1582407947304-fd86f028f716?q=80&w=2070&auto=format&fit=crop";
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* === HERO SECTION WITH BACKGROUND IMAGE === */}
+    <div className="min-h-screen bg-gray-50">
       <section
-        className="relative py-24 text-center bg-cover bg-center"
+        className="relative py-32 md:py-40 text-center bg-cover bg-center"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('${bannerImageUrl}')`,
+          backgroundImage: `linear-gradient(rgba(17, 24, 39, 0.7), rgba(17, 24, 39, 0.7)), url('${bannerImageUrl}')`,
         }}
       >
-        <div className="container mx-auto px-4 animate-fade-in text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Get In Touch</h1>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-90">
+        <div className="container mx-auto px-4 text-white">
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-4xl md:text-6xl font-extrabold mb-4"
+          >
+            Get In Touch
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-lg md:text-xl max-w-3xl mx-auto opacity-90"
+          >
             Have a question or a property in mind? Our expert advisors are ready
             to assist you on your real estate journey.
-          </p>
+          </motion.p>
         </div>
       </section>
 
-      {/* Contact Form and Info Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-5 gap-12">
-            <div className="lg:col-span-2">
+          <div className="grid lg:grid-cols-5 gap-12 items-start">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-2 bg-gray-900 text-white p-8 rounded-xl shadow-2xl"
+            >
               <h2 className="text-3xl font-bold mb-4">Contact Information</h2>
-              <p className="text-gray-600 mb-8">
+              <p className="text-gray-300 mb-8">
                 Reach out to us directly through any of the channels below.
-                We're here to help you 24/7.
               </p>
               <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="bg-red-100 p-3 rounded-full">
-                    <Phone className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Call Us</h3>
-                    <p className="text-gray-600 hover:text-red-600 transition-colors">
-                      +91 9179140133
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="bg-red-100 p-3 rounded-full">
-                    <Mail className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Email Us</h3>
-                    <p className="text-gray-600 hover:text-red-600 transition-colors">
-                      infoinvestorsdeaal@gmail.com
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="bg-red-100 p-3 rounded-full">
-                    <MapPin className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Our Office</h3>
-                    <p className="text-gray-600">
-                      A-96, Noida Sector 63, New Delhi, India
-                    </p>
-                  </div>
+                <InfoItem
+                  icon={<Phone />}
+                  title="Call Us"
+                  content="+91 9179140133"
+                />
+                <InfoItem
+                  icon={<Mail />}
+                  title="Email Us"
+                  content="infoinvestorsdeaal@gmail.com"
+                />
+                <InfoItem
+                  icon={<MapPin />}
+                  title="Our Office"
+                  content="A-96, Noida Sector 63, New Delhi, India"
+                />
+              </div>
+              <div className="mt-10 pt-6 border-t border-gray-700">
+                <h3 className="text-xl font-semibold mb-4">Our Presence</h3>
+                <div className="flex flex-wrap gap-3">
+                  {["Delhi", "Noida", "Mumbai", "Bangalore", "Pune"].map(
+                    (city) => (
+                      <div
+                        key={city}
+                        className="bg-red-600/20 text-red-300 text-sm font-medium px-3 py-1 rounded-full"
+                      >
+                        {city}
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="lg:col-span-3">
-              <Card className="p-8 shadow-lg border-gray-200">
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="lg:col-span-3"
+            >
+              <Card className="p-8 shadow-xl border-gray-200">
                 <h2 className="text-2xl font-bold mb-6 text-gray-900">
                   Tell Us What You're Looking For
                 </h2>
@@ -304,23 +322,24 @@ const ContactUs = () => {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full bg-red-600 text-white hover:bg-red-700"
+                      className="w-full bg-red-600 text-white hover:bg-red-700 text-lg group"
                       disabled={isLoading}
                     >
-                      {isLoading && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isLoading ? (
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      ) : (
+                        <Send className="mr-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                       )}
                       Submit Inquiry
                     </Button>
                   </form>
                 </Form>
               </Card>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Map Section */}
       <section>
         <div className="container mx-auto px-4 pb-20">
           <div className="text-center mb-12">
@@ -329,7 +348,7 @@ const ContactUs = () => {
               Visit our office for a face-to-face consultation.
             </p>
           </div>
-          <div className="rounded-lg overflow-hidden border-2 border-gray-200 shadow-md">
+          <div className="rounded-xl overflow-hidden border-2 border-gray-200 shadow-lg">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3502.260846069901!2d77.37326067512275!3d28.62194887567026!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce544da1eb623%3A0x144f1246473a25f!2sSector%2063%2C%20Noida%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1700000000000"
               width="100%"
@@ -345,5 +364,30 @@ const ContactUs = () => {
     </div>
   );
 };
+
+// Reusable component for contact info items
+const InfoItem = ({
+  icon,
+  title,
+  content,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  content: string;
+}) => (
+  <div className="flex items-start gap-4">
+    <div className="bg-red-600/20 p-3 rounded-full">
+      {React.cloneElement(icon as React.ReactElement, {
+        className: "w-6 h-6 text-red-400",
+      })}
+    </div>
+    <div>
+      <h3 className="font-semibold text-lg text-white">{title}</h3>
+      <p className="text-gray-300 hover:text-red-400 transition-colors cursor-pointer">
+        {content}
+      </p>
+    </div>
+  </div>
+);
 
 export default ContactUs;
