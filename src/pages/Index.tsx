@@ -34,6 +34,11 @@ import Autoplay from "embla-carousel-autoplay";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// --- Naye sections ko import karein ---
+import AboutUsSection from "@/components/AboutUsSection";
+import MissionVisionSection from "@/components/MissionVisionSection";
+import TeamSection from "@/components/TeamSection";
+
 const PropertyCardSkeleton: FC = () => (
   <Card className="overflow-hidden animate-pulse">
     <div className="h-52 bg-muted"></div>
@@ -147,6 +152,7 @@ const Index: FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* --- HERO SECTION (Original) --- */}
       <section
         className="relative text-white pt-28 pb-20 min-h-screen flex items-center justify-center"
         style={{
@@ -207,7 +213,7 @@ const Index: FC = () => {
                 "Industrial",
                 "Resale",
                 "New Launch",
-                "Upcoming",
+                "Rental",
                 "Emergency",
               ].map((category) => (
                 <Button
@@ -224,6 +230,14 @@ const Index: FC = () => {
         </motion.div>
       </section>
 
+      {/* --- NAYA SECTION: ABOUT US --- */}
+      <AboutUsSection />
+
+      {/* --- NAYA SECTION: MISSION & VISION --- */}
+      <MissionVisionSection />
+      <TeamSection />
+
+      {/* --- FEATURED PROPERTIES SECTION (Original) --- */}
       <section className="py-20 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -264,6 +278,7 @@ const Index: FC = () => {
         </div>
       </section>
 
+      {/* --- EXPLORE TOP CITIES SECTION (Original) --- */}
       <section className="py-20 sm:py-24 bg-muted/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -314,6 +329,9 @@ const Index: FC = () => {
         </div>
       </section>
 
+      {/* --- EXPLORE BY PROPERTY TYPE SECTION (Original) --- */}
+      {/* --- EXPLORE BY PROPERTY TYPE SECTION (Original) --- */}
+      {/* --- EXPLORE BY PROPERTY TYPE SECTION (Original) --- */}
       <section className="pt-16 sm:pt-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -323,16 +341,36 @@ const Index: FC = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { icon: Home, label: "Apartments" },
-              { icon: Building, label: "Villas" },
-              { icon: Warehouse, label: "Commercial" },
-              { icon: SquareStack, label: "Plots & Land" },
+              {
+                icon: Home,
+                label: "Apartments",
+                img: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=2070",
+              },
+              {
+                icon: Building,
+                label: "Villas",
+                img: "https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2070",
+              },
+              {
+                icon: Warehouse,
+                label: "Commercial",
+                img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070",
+              },
+              {
+                icon: SquareStack,
+                label: "Plots & Land",
+                img: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2532",
+              },
             ].map((type) => (
               <Card
                 key={type.label}
-                className="group cursor-pointer hover:border-primary hover:shadow-lg hover:-translate-y-2 transition-all duration-300"
+                className="group cursor-pointer hover:border-primary hover:shadow-lg hover:-translate-y-2 transition-all duration-300 overflow-hidden relative"
               >
-                <CardContent className="p-6 text-center flex flex-col items-center justify-center h-full">
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-10 group-hover:opacity-20 transition-opacity duration-300"
+                  style={{ backgroundImage: `url('${type.img}')` }}
+                ></div>
+                <CardContent className="p-6 text-center flex flex-col items-center justify-center h-full relative z-10">
                   <div className="bg-primary/10 p-4 rounded-full mb-4">
                     <type.icon className="w-8 h-8 text-primary" />
                   </div>
@@ -346,6 +384,7 @@ const Index: FC = () => {
         </div>
       </section>
 
+      {/* --- WHY CHOOSE US SECTION (Original) --- */}
       <section className="pt-16 sm:pt-20 bg-muted/40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -393,6 +432,9 @@ const Index: FC = () => {
         </div>
       </section>
 
+      {/* --- NAYA SECTION: EXPERT TEAM --- */}
+
+      {/* --- TESTIMONIALS SECTION (Original) --- */}
       <section className="pt-16 sm:pt-20 pb-20 sm:pb-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -450,6 +492,7 @@ const Index: FC = () => {
         </div>
       </section>
 
+      {/* --- CTA SECTION (Original) --- */}
       <section className="pb-10 pt-10">
         <div className="container mx-auto px-4">
           <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-10 md:p-16 text-center text-white relative overflow-hidden">
