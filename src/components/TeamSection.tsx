@@ -1,14 +1,5 @@
 import { FC, useState, useEffect } from "react";
-import {
-  Target,
-  Eye,
-  Rocket,
-  TrendingUp,
-  Users,
-  Award,
-  Building2,
-  Shield,
-} from "lucide-react";
+import { motion } from "framer-motion";
 
 // Data for team members
 const teamMembers = [
@@ -20,7 +11,7 @@ const teamMembers = [
   {
     name: "Rashmin Rana",
     role: "Cofounder",
-    img: "/founder2.jpg",
+    img: "/founder2-.png",
   },
   {
     name: "Anurag Singh",
@@ -49,244 +40,184 @@ const TeamMemberCard: FC<{
   }, [delay]);
 
   return (
-    <div
-      className={`text-center group transition-all duration-500 ${
-        isVisible ? "opacity-100 scale-100" : "opacity-0 scale-90"
-      }`}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ delay: delay / 1000, duration: 0.5 }}
+      whileHover={{ scale: 1.05, y: -10 }}
+      className="text-center group transition-all duration-500"
     >
-      <div className="relative w-full aspect-[4/5] mx-auto mb-4 overflow-hidden rounded-lg">
-        <img
+      <div className="relative w-full h-64 mx-auto mb-3 overflow-hidden rounded-xl border-2 border-white/10 hover:border-red-400/50 transition-all duration-300">
+        <motion.img
           src={img}
           alt={name}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover object-[center_20%]"
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.4 }}
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </div>
-      <h3 className="text-lg font-bold text-gray-900">{name}</h3>
-      <p className="text-amber-600 text-sm font-medium">{role}</p>
-    </div>
+      <motion.h3
+        className="text-base font-bold text-white"
+        whileHover={{ scale: 1.05 }}
+      >
+        {name}
+      </motion.h3>
+      <p className="text-red-400 text-xs font-medium">{role}</p>
+    </motion.div>
   );
 };
 
 // Team Section Component
 const TeamSection: FC = () => {
   return (
-    <section className="py-20 sm:py-24 bg-gradient-to-b from-gray-50 to-white">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-16 items-center">
+    <section
+      className="py-16 sm:py-20 relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95))",
+      }}
+    >
+      {/* Animated Background */}
+      <motion.div
+        className="absolute top-0 left-0 w-96 h-96 bg-red-500/10 rounded-full blur-3xl"
+        animate={{
+          scale: [1, 1.3, 1],
+          opacity: [0.2, 0.3, 0.2],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      <motion.div
+        className="absolute bottom-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"
+        animate={{
+          scale: [1.3, 1, 1.3],
+          opacity: [0.3, 0.2, 0.3],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      {/* Floating particles */}
+      {[...Array(20)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-white/30 rounded-full"
+          style={{
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            y: [0, -30, 0],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+            delay: Math.random() * 2,
+          }}
+        />
+      ))}
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-12 items-center">
           <TeamMemberCard {...teamMembers[0]} delay={0} />
 
-          <div className="text-center px-6 order-first md:order-none col-span-1 md:col-start-2">
-            <p className="text-sm font-semibold text-amber-600 tracking-widest uppercase mb-4">
-              TEAM MEMBERS
-            </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-2 after:h-[2px] after:bg-amber-500">
+          {/* Center Title */}
+          <motion.div
+            className="text-center px-4 order-first md:order-none col-span-1 md:col-start-2"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+              className="inline-block mb-3"
+            >
+              <p className="text-xs font-semibold text-red-400 tracking-widest uppercase bg-red-500/20 px-3 py-1.5 rounded-full border border-red-400/30 backdrop-blur-sm">
+                TEAM MEMBERS
+              </p>
+            </motion.div>
+
+            <motion.h2
+              className="text-3xl md:text-4xl font-bold text-white mb-3 relative inline-block"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
               Meet Our Team
-            </h2>
-            <p className="text-gray-600 mt-8">
+              <motion.div
+                className="absolute left-0 right-0 -bottom-2 h-[2px] bg-gradient-to-r from-red-500 to-orange-500"
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5, duration: 0.8 }}
+              />
+            </motion.h2>
+
+            <motion.p
+              className="text-white/70 mt-6 text-sm"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+            >
               A dynamic team of real estate experts, marketers, and mentors
               dedicated to driving growth for realtors, brokers, and developers.
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
 
           <TeamMemberCard {...teamMembers[1]} delay={200} />
           <TeamMemberCard {...teamMembers[2]} delay={300} />
 
-          <div className="transition-all duration-500">
-            <img
-              src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=2070&auto=format&fit=crop"
-              alt="Modern Villa"
-              className="w-full h-full object-cover aspect-[4/5] rounded-lg"
-            />
-          </div>
+          {/* Property Image */}
+          <motion.div
+            className="transition-all duration-500"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            whileHover={{ scale: 1.05, y: -10 }}
+          >
+            <div className="relative w-full h-64 overflow-hidden rounded-xl border-2 border-white/10 hover:border-orange-400/50 transition-all duration-300 group">
+              <motion.img
+                src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=2070&auto=format&fit=crop"
+                alt="Modern Villa"
+                className="w-full h-full object-cover"
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.4 }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+              <motion.div
+                className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                initial={{ y: 20 }}
+                whileHover={{ y: 0 }}
+              >
+                <p className="text-white text-sm font-semibold">
+                  Modern Architecture
+                </p>
+                <p className="text-white/70 text-xs">Our Premium Projects</p>
+              </motion.div>
+            </div>
+          </motion.div>
 
           <TeamMemberCard {...teamMembers[3]} delay={500} />
-          {/* <div className="transition-all duration-500">
-            <img
-              src="/foundermain.jpg"
-              alt="Founder"
-              className="w-full h-full object-cover aspect-[4/5] rounded-lg"
-            />
-          </div> */}
-          {/* <TeamMemberCard {...teamMembers[4]} delay={700} /> */}
-          {/* <div className="transition-all duration-500">
-            <img
-              src="/founder2.jpg"
-              alt="Co-Founder"
-              className="w-full h-full object-cover aspect-[4/5] rounded-lg"
-            />
-          </div> */}
         </div>
       </div>
     </section>
   );
 };
 
-// Mission Vision Section Component
-const MissionVisionSection: FC = () => {
-  return (
-    <section className="py-20 sm:py-24 bg-white">
-      <div className="container mx-auto px-4">
-        {/* Header Section */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-full border border-amber-200 mb-4">
-            <Rocket className="w-4 h-4 text-amber-600" />
-            <span className="text-amber-600 text-sm font-semibold">
-              OUR FOUNDATION
-            </span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-            Mission & Vision
-          </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Building India's most innovative real estate ecosystem with
-            transparency, technology, and trust at its core
-          </p>
-        </div>
-
-        {/* Main Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto mb-12">
-          {/* Mission Card */}
-          <div className="group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200">
-            {/* Image Header */}
-            <div className="relative h-56 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80"
-                alt="Mission"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-              <div className="absolute bottom-4 left-4 p-3 bg-amber-600 rounded-xl shadow-lg">
-                <Target className="w-7 h-7 text-white" />
-              </div>
-            </div>
-
-            <div className="p-8">
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">
-                Our Mission
-              </h3>
-
-              <p className="text-gray-600 text-base md:text-lg mb-6 leading-relaxed">
-                To{" "}
-                <span className="text-amber-600 font-semibold">
-                  revolutionize
-                </span>{" "}
-                the Indian real estate market through cutting-edge technology,
-                unwavering transparency, and absolute trust—making property
-                investment accessible, profitable, and seamless for everyone.
-              </p>
-
-              {/* Key Points */}
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <TrendingUp className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-600 text-sm">
-                    Democratizing real estate investment with tech-driven
-                    solutions
-                  </span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-600 text-sm">
-                    Ensuring 100% transparency in every transaction
-                  </span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Users className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-600 text-sm">
-                    Empowering investors with data-driven insights
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Vision Card */}
-          <div className="group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200">
-            {/* Image Header */}
-            <div className="relative h-56 overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80"
-                alt="Vision"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-              <div className="absolute bottom-4 left-4 p-3 bg-amber-700 rounded-xl shadow-lg">
-                <Eye className="w-7 h-7 text-white" />
-              </div>
-            </div>
-
-            <div className="p-8">
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">
-                Our Vision
-              </h3>
-
-              <p className="text-gray-600 text-base md:text-lg mb-6 leading-relaxed">
-                To become{" "}
-                <span className="text-amber-700 font-semibold">
-                  India's #1 trusted
-                </span>{" "}
-                and most comprehensive real estate ecosystem, creating lasting
-                value, building generational wealth, and establishing legacies
-                for our clients, partners, and communities.
-              </p>
-
-              {/* Key Points */}
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Building2 className="w-5 h-5 text-amber-700 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-600 text-sm">
-                    Building a comprehensive property ecosystem across India
-                  </span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Award className="w-5 h-5 text-amber-700 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-600 text-sm">
-                    Setting industry standards for excellence and integrity
-                  </span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Users className="w-5 h-5 text-amber-700 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-600 text-sm">
-                    Creating lasting impact for investors and communities
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-          {[
-            { value: "10K+", label: "Happy Clients", icon: Users },
-            { value: "500+", label: "Properties Listed", icon: Building2 },
-            { value: "₹1000Cr+", label: "Worth Transacted", icon: TrendingUp },
-            { value: "50+", label: "Cities Covered", icon: Award },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-xl p-6 border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 text-center hover:border-amber-300"
-            >
-              <stat.icon className="w-8 h-8 text-amber-600 mx-auto mb-3" />
-              <div className="text-3xl font-bold text-gray-900 mb-1">
-                {stat.value}
-              </div>
-              <div className="text-gray-600 text-sm">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// Main App Component
-const App: FC = () => {
-  return (
-    <div className="min-h-screen bg-white">
-      <TeamSection />
-    </div>
-  );
-};
-
-export default App;
+export default TeamSection;
