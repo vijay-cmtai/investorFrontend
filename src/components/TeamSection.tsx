@@ -19,9 +19,9 @@ const teamMembers = [
     img: "https://cdn.pixabay.com/photo/2023/06/16/15/10/man-8068201_1280.jpg",
   },
   {
-    name: "Rani Arora",
+    name: "Vijay",
     role: "Development Team",
-    img: "https://img.freepik.com/premium-photo/female-developer-background_665280-9660.jpg",
+    img: "/vijay.jpg",
   },
 ];
 
